@@ -14,21 +14,27 @@ namespace Expansion_CSharp
         {
             InitializeComponent();
 
-            /*
-            var vertices = new CLCalc.Program.Variable(new float[] {
-                -1.08f, 0.92f, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                -0.6f, -1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                1, 1, 2.4f, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            });
-
-            var indices = new CLCalc.Program.Variable(new int[] { 0, 1, 2 });
-            */
+            //Mesh SM_Rock_Chunk = Mesh.CreateFromResource(Resources.SM_Rock_Chunk);
 
             Renderer.Initialize();
 
-            Renderer.Clear();
-
-            Renderer.RenderMesh(Mesh.Cube);
+            World.Current.Spawn(
+                new MeshActor(Mesh.Cube, Renderer.ResourceTextures[0]),
+                new Transform(
+                    new Vector(2, 0, 7.2f),
+                    new Vector(2.4f, 2.3f, 4.4f),
+                    new Vector(1, 1, 1)
+                )
+            );
+            World.Current.Spawn(
+                new MeshActor(Mesh.SM_Rock_Chunk, Renderer.ResourceTextures[0]),
+                new Transform(
+                    new Vector(1, 0, 8),
+                    new Vector(1, 0, 0),
+                    new Vector(0.01f, 0.01f, 0.01f)
+                )
+            );
+            World.Current.Tick();
 
             var bmp = Renderer.Out();
 
@@ -39,6 +45,20 @@ namespace Expansion_CSharp
 
             pictureBox1.Image = bmp;
 
+            timer1.Start();
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            timer1.Stop();
+
+            World.Current.Tick();
+
+            var bmp = Renderer.Out();
+
+            pictureBox1.Image = bmp;
+
+            timer1.Start();
         }
     }
 }

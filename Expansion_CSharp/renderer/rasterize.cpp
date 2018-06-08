@@ -4,12 +4,26 @@
 
 #endif
 
-float3 pixelShader(const Vertex v, const WorldSettings* worldSettings)
+float3 sampleTexture(read_only image2d_t tex, const float2 uv)
+{
+	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_FILTER_LINEAR;
+
+	float3 color = convert_float3(read_imageui(tex, texsampler, uv).zyx) / 255;
+
+	return color;
+}
+
+float3 sampleTextureWithFilter(read_only image2d_t tex, const float2 uv)
+{
+	return sampleTexture(tex, uv);
+}
+
+float3 pixelShader(const Vertex v, const WorldSettings* worldSettings, read_only image2d_t basetex, read_only image2d_t normaltex)
 {
 	//float4 cameralight = reflect(worldSettings->lightDir, v.normal);
 	//float bright = clamp(-cameralight.z, 0.1f, 1.f);
 
-	float3 basecolor = (float3)(0.9, 0.94, 0.96);
+	float3 basecolor = sampleTexture(basetex, v.uv); //(float3)(0.9, 0.94, 0.96);
 
 	float ambient = clamp(-dot(worldSettings->lightDir, v.normal.xyz), 0.1f, 1.f);
 
@@ -21,8 +35,11 @@ float edgeFunction(float4 a, float4 b, float4 c)
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-void rasterizeOne(const Triangle t, const int2 pos, Pixel* pix, const WorldSettings* worldSettings)
+void rasterizeOne(const Triangle t, const int2 pos, Pixel* pix, const WorldSettings* worldSettings, read_only image2d_t basetex, read_only image2d_t normaltex)
 {
+	if (t.pmin.x > pos.x || t.pmin.y > pos.y || t.pmax.x < pos.x || t.pmax.y < pos.y)
+		return;
+
 	float area = 1 / edgeFunction(t.edges[0].screenPos, t.edges[1].screenPos, t.edges[2].screenPos);
 
 	float w[3];
@@ -46,7 +63,9 @@ void rasterizeOne(const Triangle t, const int2 pos, Pixel* pix, const WorldSetti
 
 	half z = w[0] * t.edges[0].screenPos.z + w[1] * t.edges[1].screenPos.z + w[2] * t.edges[2].screenPos.z;
 
-	if (z >= pix->depth)
+	float zCorr = 1 / (w[0] * t.edges[0].screenPos.w + w[1] * t.edges[1].screenPos.w + w[2] * t.edges[2].screenPos.w);
+
+	if (z*zCorr >= pix->depth)
 		return;
 
 	//float c0[3] = { 255, 0, 0 };
@@ -58,25 +77,28 @@ void rasterizeOne(const Triangle t, const int2 pos, Pixel* pix, const WorldSetti
 		vmul(t.edges[1].vertex, w[1])),
 		vmul(t.edges[2].vertex, w[2]));
 
+	v.normal *= zCorr;
+	v.uv *= zCorr;
+
 	//float r = w[0] * c0[0] + w[1] * c1[0] + w[2] * c2[0];
 	//float g = w[0] * c0[1] + w[1] * c1[1] + w[2] * c2[1];
 	//float b = w[0] * c0[2] + w[1] * c1[2] + w[2] * c2[2];
 
-	float3 color = pixelShader(v, worldSettings);
+	float3 color = pixelShader(v, worldSettings, basetex, normaltex);
 
 	pix->color = convert_uchar4((float4)(clamp(color.x * 255, 0.f, 255.f), clamp(color.y * 255, 0.f, 255.f), clamp(color.z * 255, 0.f, 255.f), 255.f));
-	pix->depth = z;
+	pix->depth = z * zCorr;
 }
 
-kernel void rasterize(global RenderTexture* canvas, global WorldSettings* _worldSettings, global Triangle* t, global uint* tCount)
+kernel void rasterize(global RenderTexture* canvas, global WorldSettings* _worldSettings, global Triangle* t, read_only image2d_t basetex, read_only image2d_t normaltex)
 {
 	const int2 pos = { get_global_id(0), get_global_id(1) };
 	global Pixel* pix = getPixel(canvas, pos);
 
 	Pixel _pix = *pix;
 	WorldSettings worldSettings = *_worldSettings;
-	for (uint i = 0; i < *tCount; i++)
-		rasterizeOne(t[i], pos, &_pix, &worldSettings);
+	for (uint i = 0; i < worldSettings.triangleCount; i++) // worldSettings.triangleCount
+		rasterizeOne(t[i], pos, &_pix, &worldSettings, basetex, normaltex);
 
 	*pix = _pix;
 }

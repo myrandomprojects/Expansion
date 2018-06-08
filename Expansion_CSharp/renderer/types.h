@@ -2,11 +2,13 @@
 
 #define kernel
 #define global
+#define read_only
 #define write_only
 #define get_global_id(i) 0
 
 
 typedef unsigned char uchar;
+typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long long ulong;
 typedef float half;
@@ -15,6 +17,7 @@ struct float2 { float x, y; };
 struct float3 { float x, y, z; };
 struct float4 { float x, y, z, w; };
 struct uchar4 { uchar x, y, z, w; };
+struct ushort2 { ushort x, y; };
 struct uint4 { uint x, y, z, w; };
 
 #define COORD(x,y) int2(x,y)
@@ -47,8 +50,9 @@ typedef struct {
 	struct {
 		Vertex vertex;
 		float4 screenPos;
-		float2 vals;
 	} edges[3];
+
+	ushort2 pmin, pmax;
 
 	uchar isVisible;
 	uchar isClockwise;
@@ -56,8 +60,13 @@ typedef struct {
 
 
 typedef struct {
-	float3 lightDir;
-
+	union {
+		float3 lightDir;
+		struct {
+			int; int; int;
+			int triangleCount;
+		};
+	};
 	struct Camera {
 		float2 screenSize;
 	} camera;

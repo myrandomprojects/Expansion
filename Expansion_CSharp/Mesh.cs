@@ -1,10 +1,16 @@
-﻿using System.Linq;
+﻿using OpenCLTemplate;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace Expansion_CSharp
 {
     class Vector
     {
         public float[] values;
+
+        public float Length { get { return (float)Math.Sqrt(values.Select(v => v * v).Sum()); } }
 
         public Vector(params float[] v)
         {
@@ -34,6 +40,7 @@ namespace Expansion_CSharp
                 v2[i] = a.values[i] * b;
             return new Vector(v2);
         }
+
     }
     class Vertex
     {
@@ -45,9 +52,14 @@ namespace Expansion_CSharp
 
         public Vertex(Vector pos, Vector norm, Vector uv)
         {
-            Position = pos;
-            Normal = norm;
-            TexUV = uv;
+            if (pos != null)
+                Position = pos;
+
+            if (norm != null)
+                Normal = norm;
+
+            if (uv != null)
+                TexUV = uv;
         }
     }
     class Mesh
@@ -55,10 +67,32 @@ namespace Expansion_CSharp
         public Vertex[] Vertices { get; private set; }
         public int[] Indices { get; private set; }
 
+        public CLCalc.Program.Variable VBuffer { get; private set; }
+        public CLCalc.Program.Variable IBuffer { get; private set; }
+
         public Mesh(int vCount, int iCount)
         {
             Vertices = new Vertex[vCount];
             Indices = new int[iCount];
+        }
+        public Mesh(Vertex[] v, int[] i)
+        {
+            Vertices = v;
+            Indices = i;
+        }
+
+        public void LoadBuffers()
+        {
+            if (VBuffer != null)
+                return;
+
+            var vertexValuesPlain = new List<float>();
+
+            foreach (var vertex in Vertices)
+                vertexValuesPlain.AddRange(vertex.values);
+
+            VBuffer = new CLCalc.Program.Variable(vertexValuesPlain.ToArray());
+            IBuffer = new CLCalc.Program.Variable(Indices);
         }
 
         private static Mesh CreateCube()
@@ -101,10 +135,36 @@ namespace Expansion_CSharp
 
             return square;
         }
+
+        public static Mesh CreateFromResource(string res)
+        {
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+            var lines = res.Split('\r', '\n');
+            var v = new List<Vertex>(); int vt = 0, vn = 0;
+            var indices = new List<int>();
+            foreach (var line in lines)
+            {
+                var vals = line.Split(' ');
+                
+                if (line.StartsWith("vt"))
+                    v[vt++].TexUV = new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray());
+                else if (line.StartsWith("vn"))
+                    v[vn++].Normal = new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray());
+                else if (line.StartsWith("v"))
+                    v.Add(new Vertex(new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray()), null, null));
+                else if (line.StartsWith("f"))
+                {
+                    vals = line.Split(' ', '/');
+                    indices.AddRange(new int[] { int.Parse(vals[1])-1, int.Parse(vals[4])-1, int.Parse(vals[7])-1 });
+                }
+
+            }
+
+            return new Mesh(v.ToArray(), indices.ToArray());
+        }
         
         public static readonly Mesh Cube = CreateCube();
-
-
+        public static readonly Mesh SM_Rock_Chunk = CreateFromResource(Resources.SM_Rock_Chunk);
 
 
         static void Swap<T>(ref T x, ref T y)
