@@ -1,20 +1,82 @@
-﻿namespace Expansion_CSharp
+﻿using OpenCLTemplate;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using static OpenCLTemplate.CLCalc.Program;
+
+namespace Expansion_CSharp
 {
     internal class Material
     {
-        private Texture BaseColor;
-        private Texture Normal;
+        private Texture[] textures;
 
-        public Material(Texture baseColor, Texture normal)
+        public string Name { get; private set; }
+        public string Code { get; private set; }
+
+        public Kernel Kernel { get; set; }
+
+        public Material(string name, string matBody)
         {
-            BaseColor = baseColor;
-            Normal = normal;
+            Name = name;
+
+            var textures = new List<Texture>();
+            var names = new List<string>();
+            foreach (Match match in Regex.Matches(matBody, @"sample[A-Za-z]*\(([A-Za-z0-9_]+)\)"))
+            {
+                string val = match.Groups[1].Value;
+                if (names.Contains(val))
+                    continue;
+
+                textures.Add(Content.LoadTexture(val));
+                names.Add(val);
+            }
+
+            Code = "MAT_FUNC Material_" + name + "(MAT_ARGS()" + string.Join("", names.Select(n => ", read_only image2d_t " + n)) + ") "+
+                "{ \r\n    MAT_HEADER() \r\n//" + matBody + "MAT_FOOTER() }";
+
+            /*Code = Resources.MaterialBase
+                .Replace("$NAME$", name)
+                .Replace("$ARGS$", string.Join("", names.Select(n => ", read_only image2d_t " + n)))
+                .Replace("$BODY$");
+            */
+            this.textures = textures.ToArray();
         }
 
-        public void Activate()
+        public MemoryObject[] MatArgs()
         {
-            Renderer.Texture0 = BaseColor.GPUResource;
-            Renderer.Texture1 = Normal.GPUResource;
+            var objs = new MemoryObject[textures.Length];
+            int i = 0;
+            foreach (var t in textures)
+                objs[i++] = t.GPUResource;
+            return objs;
+        }
+
+        internal void Rasterize(Variable renderTexture, Variable worldSettings, Variable vertices, Variable projVerticesBuff, Variable indices, int[] screenSize)
+        {
+            var f = new float[projVerticesBuff.OriginalVarLength];
+            projVerticesBuff.ReadFromDeviceTo(f);
+            Kernel.Execute(new MemoryObject[] { renderTexture, worldSettings, vertices, projVerticesBuff, indices }.Concat(textures.Select(t => t.GPUResource)).ToArray(), screenSize);
         }
     }
 }
+
+
+/*
+ 
+	BaseColor = 
+		Add(
+			Multiply(
+				Multiply(
+					Lerp(
+						COLOR(0.6, 0.5, 0.2),
+						COLOR(1.06, 3.265, 4),
+						sample(T_Water_Screen)
+					),
+					sample(T_CliffRock)
+				),
+				1
+			),
+
+		)
+*/

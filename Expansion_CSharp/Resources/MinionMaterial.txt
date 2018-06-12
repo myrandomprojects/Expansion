@@ -1,0 +1,10 @@
+#MATERIAL
+{	
+	BaseColor = sample(T_Buff_White_D);
+
+	float3 mask = sample(T_Minion_Dawn_Melee_MASK01);
+	Metallic = clamp((float)pow(mask.x, 2), 0.f, 1.f);
+	Roughness = mask.y;
+	
+	Normal = sampleNormal(T_Buff_White_N);
+}

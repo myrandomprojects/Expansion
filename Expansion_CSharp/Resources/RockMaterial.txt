@@ -1,0 +1,5 @@
+#MATERIAL
+{
+	BaseColor = sample(T_Brick_Clay_Old_D);
+	Normal    = sampleNormal(T_Brick_Clay_Old_N);
+}

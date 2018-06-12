@@ -17,6 +17,27 @@ matrix newmatrix(float16 vals)
 	m.d16 = vals;
 	return m;
 }
+matrix matrix_identity()
+{
+	return newmatrix((float16)(
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	));
+}
+
+matrix mat_mul(matrix a, matrix b)
+{
+	matrix res;
+	for (int i = 0; i < 4; ++i)
+		for (int j = 0; j < 4; ++j) {
+			res.dd[i][j] = 0;
+			for (int k = 0; k < 4; ++k)
+				res.dd[i][j] += a.dd[i][k] * b.dd[k][j];
+		}
+	return res;
+}
 
 matrix matrix_translate(float3 loc)
 {
@@ -49,7 +70,6 @@ matrix matrix_rotation_pitch(float angle)
 		0, 0, 0, 1
 	));
 }
-
 matrix matrix_rotation_roll(float angle)
 {
 	float c = cos(angle);
@@ -61,8 +81,6 @@ matrix matrix_rotation_roll(float angle)
 		0, 0, 0, 1
 	));
 }
-
-
 matrix matrix_rotation_yaw(float angle)
 {
 	float c = cos(angle);
@@ -75,16 +93,23 @@ matrix matrix_rotation_yaw(float angle)
 	));
 }
 
-matrix mat_mul(matrix a, matrix b)
+matrix matrix_lookat(float3 target, float3 camloc, float3 up)
 {
-	matrix res;
-	for (int i = 0; i < 4; ++i)
-		for (int j = 0; j < 4; ++j) {
-			res.dd[i][j] = 0;
-			for (int k = 0; k < 4; ++k)
-				res.dd[i][j] += a.dd[i][k] * b.dd[k][j];
-		}
-	return res;
+	float3 z = normalize(target - camloc);
+	float3 x = normalize(cross(up, z));
+	float3 y = normalize(cross(z, x));
+	matrix minv = matrix_identity();
+	matrix tr = matrix_identity();
+
+#define vi(v, i)(i==0 ? v.x : (i==1 ? v.y : v.z))
+	for (int i = 0; i < 3; i++) {
+		minv.dd[0][i] = vi(x, i);
+		minv.dd[1][i] = vi(y, i);
+		minv.dd[2][i] = vi(z, i);
+		tr.dd[i][3] = -vi(camloc, i);
+	}
+#undef vi
+	return mat_mul(minv, tr);
 }
 
 float4 vec_mat_mul(float4 v, matrix m)

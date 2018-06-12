@@ -20,6 +20,7 @@ namespace Expansion_CSharp
             renderTexture,
             clearColor,
             worldSettings,
+            projVerticesBuff,
             trianglesBuff;
         static CLCalc.Program.Image2D screen;
 
@@ -49,24 +50,26 @@ namespace Expansion_CSharp
             List<ComputeDevice> L = CLCalc.CLDevices;
             CLCalc.Program.DefaultCQ = 0;
 
+            var mats = Content.LoadMaterials();
 
-            string code = ReadFilesOfType("*.h") + ReadFilesOfType("*.cpp");
+            string code = ReadFilesOfType("*.h") + ReadFilesOfType("*.cpp") + string.Join("\r\n\r\n\r\n\r\n\r\n", mats.Select(mat => mat.Code));
             CLCalc.Program.Compile(code, out List<string> logs);
 
             clear = new CLCalc.Program.Kernel("clear");
             project = new CLCalc.Program.Kernel("project");
-            rasterize = new CLCalc.Program.Kernel("rasterize");
+            //rasterize = new CLCalc.Program.Kernel("rasterize");
             finalize = new CLCalc.Program.Kernel("finalize");
 
             renderTexture = new CLCalc.Program.Variable(typeof(float), 2 * ScreenSize[0] * ScreenSize[1]);
             clearColor = new CLCalc.Program.Variable(new byte[4] { 100, 149, 237, 255 });
             screen = new CLCalc.Program.Image2D(ComputeImageChannelType.UnsignedInt8, ScreenSize[0], ScreenSize[1]);
-            worldSettings = new CLCalc.Program.Variable(GetWorldSettings(new Vector(3, 12, 15)));
-            trianglesBuff = new CLCalc.Program.Variable(new float[64 * 1000]);
+            worldSettings = new CLCalc.Program.Variable(GetWorldSettings(new Vector(3, 12, 2)));
+            projVerticesBuff = new CLCalc.Program.Variable(new float[16 * 100000]);
+            trianglesBuff = new CLCalc.Program.Variable(new float[64 * 10000]);
 
-            ResourceTextures = new List<Material>(){
-                new Material(new Texture(Resources.T_Brick_Clay_Old_D), new Texture(Resources.T_Brick_Clay_Old_N))
-            };
+            foreach (var m in mats)
+                m.Kernel = new CLCalc.Program.Kernel("Material_" + m.Name);
+            //ResourceTextures = new List<Material>(){ new Material(new Texture(Resources.T_Brick_Clay_Old_D), new Texture(Resources.T_Brick_Clay_Old_N)) };
         }
 
 
@@ -78,7 +81,7 @@ namespace Expansion_CSharp
 
 
         static CLCalc.Program.Variable transform;
-        public static void RenderMesh(Mesh mesh, Transform t)
+        public static void RenderMesh(Mesh mesh, Material mat, Transform t)
         {
             /*var transform = new CLCalc.Program.Variable(new float[] {
                 0, 0, 4, 0,
@@ -92,8 +95,9 @@ namespace Expansion_CSharp
 
             mesh.LoadBuffers();
 
-            project.Execute(new CLCalc.Program.Variable[] { mesh.VBuffer, mesh.IBuffer, transform, worldSettings, trianglesBuff }, mesh.Indices.Length / 3);
-            rasterize.Execute(new CLCalc.Program.MemoryObject[] { renderTexture, worldSettings, trianglesBuff, Texture0, Texture1 }, ScreenSize);
+            project.Execute(new CLCalc.Program.Variable[] { mesh.VBuffer, projVerticesBuff, transform, worldSettings }, mesh.Indices.Length);
+            //rasterize.Execute(new CLCalc.Program.MemoryObject[] { renderTexture, worldSettings, trianglesBuff, Texture0, Texture1 }, ScreenSize);
+            mat.Rasterize(renderTexture, worldSettings, mesh.VBuffer, projVerticesBuff, mesh.IBuffer, ScreenSize);
         }
 
         public static Bitmap Out()

@@ -65,6 +65,145 @@ namespace Expansion_CSharp {
         ///
         ///
         ///
+        ///v 8.455895 122.625793 4.359799
+        ///
+        ///v 9.443095 122.505791 3.719300
+        ///
+        ///v 8.593596 122.794792 3.710400
+        ///
+        ///v 9.018596 122.209290 4.351699
+        ///
+        ///v 8.348995 122.687790 4.354899
+        ///
+        ///v 7.695595 123.456184 3.736900
+        ///
+        ///v 7.683995 122.847290 4.395999
+        ///
+        ///v 8.362095 122.983383 3.720400
+        ///
+        ///v 8.328695 122.620995 4.435200
+        ///
+        ///v 7.336595 122.386391 5.035299
+        ///
+        ///v 8.203896 122.176193 4.941000
+        ///
+        ///v 7.638095 122.665993 4.329000
+        ///
+        ///v 8.430796 122.591690 4.452400
+        ///
+        ///v 9.049195 121.945183 5.226 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Buff_White {
+            get {
+                return ResourceManager.GetString("Buff_White", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to #ifdef _WIN32
+        ///
+        ///#define kernel
+        ///#define global
+        ///#define read_only
+        ///#define write_only
+        ///#define get_global_id(i) 0
+        ///
+        ///
+        ///typedef unsigned char uchar;
+        ///typedef unsigned short ushort;
+        ///typedef unsigned int uint;
+        ///typedef unsigned long long ulong;
+        ///typedef float half;
+        ///struct int2 { int x, y; };
+        ///struct float2 { float x, y; };
+        ///struct float3 { float x, y, z; };
+        ///struct float4 { float x, y, z, w; };
+        ///struct float16 { float f[16]; };
+        ///struct uchar4 { uchar x, y, z, w; };
+        ///struct ushort2 { ushort x, y; };
+        ///struct  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MaterialBase {
+            get {
+                return ResourceManager.GetString("MaterialBase", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to # UnrealEd OBJ exporter (_Internal)
+        ///
+        ///
+        ///
+        ///v -3.609869 104.954544 8.452628
+        ///
+        ///v -3.969117 105.024223 7.882939
+        ///
+        ///v -3.311480 105.316055 8.252594
+        ///
+        ///v 3.609862 104.954552 8.452629
+        ///
+        ///v 3.311474 105.316063 8.252595
+        ///
+        ///v 3.969110 105.024231 7.882940
+        ///
+        ///v -11.438583 61.242847 -5.655427
+        ///
+        ///v -13.820689 62.835491 -2.914516
+        ///
+        ///v -15.818873 64.282478 -0.494709
+        ///
+        ///v 15.818874 64.282478 -0.494709
+        ///
+        ///v 13.820690 62.835491 -2.914517
+        ///
+        ///v 11.438584 61.242847 -5.655428
+        ///
+        ///v -32.822556 32.938580 51.223656
+        ///
+        ///v -33.764015  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Minion {
+            get {
+                return ResourceManager.GetString("Minion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to #MATERIAL
+        ///{
+        ///	BaseColor = COLOR(1,1,1); 
+        ///
+        ///	float3 mask = sample(T_Minion_Dawn_Melee_MASK01);
+        ///	Metallic = clamp((float)pow(mask.x, 2), 0.f, 1.f);
+        ///	Roughness = mask.y;
+        ///	
+        ///	Normal = sampleNormal(T_Minion_Dawn_Melee_N);
+        ///}.
+        /// </summary>
+        internal static string MinionMaterial {
+            get {
+                return ResourceManager.GetString("MinionMaterial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to #MATERIAL
+        ///{
+        ///	BaseColor = sample(T_Brick_Clay_Old_D);
+        ///	Normal    = sample(T_Brick_Clay_Old_N);
+        ///}.
+        /// </summary>
+        internal static string RockMaterial {
+            get {
+                return ResourceManager.GetString("RockMaterial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to # UnrealEd OBJ exporter (_Internal)
+        ///
+        ///
+        ///
         ///v 222.375885 78.474327 -14.926209
         ///
         ///v 202.665039 85.232674 -36.905838
@@ -113,6 +252,56 @@ namespace Expansion_CSharp {
         internal static System.Drawing.Bitmap T_Brick_Clay_Old_N {
             get {
                 object obj = ResourceManager.GetObject("T_Brick_Clay_Old_N", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap T_Buff_White_D {
+            get {
+                object obj = ResourceManager.GetObject("T_Buff_White_D", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap T_Buff_White_N {
+            get {
+                object obj = ResourceManager.GetObject("T_Buff_White_N", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap T_Minion_Dawn_Melee_D {
+            get {
+                object obj = ResourceManager.GetObject("T_Minion_Dawn_Melee_D", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap T_Minion_Dawn_Melee_MASK01 {
+            get {
+                object obj = ResourceManager.GetObject("T_Minion_Dawn_Melee_MASK01", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap T_Minion_Dawn_Melee_N {
+            get {
+                object obj = ResourceManager.GetObject("T_Minion_Dawn_Melee_N", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

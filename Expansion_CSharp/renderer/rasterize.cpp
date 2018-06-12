@@ -4,6 +4,19 @@
 
 #endif
 
+#define COLOR(r,g,b) (float3)(r,g,b)
+
+float fmin3(float a, float b, float c)
+{
+	return (a < b && a < c ? a : (b < c ? b : c));
+}
+
+float fmax3(float a, float b, float c)
+{
+	return (a > b && a > c ? a : (b > c ? b : c));
+}
+
+
 float3 sampleTexture(read_only image2d_t tex, const float2 uv)
 {
 	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_FILTER_LINEAR;
@@ -17,7 +30,7 @@ float3 sampleTextureWithFilter(read_only image2d_t tex, const float2 uv)
 {
 	return sampleTexture(tex, uv);
 }
-
+/*
 float3 pixelShader(const Vertex v, const WorldSettings* worldSettings, read_only image2d_t basetex, read_only image2d_t normaltex)
 {
 	//float4 cameralight = reflect(worldSettings->lightDir, v.normal);
@@ -29,12 +42,132 @@ float3 pixelShader(const Vertex v, const WorldSettings* worldSettings, read_only
 
 	return basecolor * (ambient + 0.1f);
 }
+*/
 
-float edgeFunction(float4 a, float4 b, float4 c)
+float edgeFunction(float3 a, float3 b, float3 c)
 {
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
+int FindNearestVertex(Vertex* vOut, global Pixel* pix, global Vertex* vert, global Vertex* projVert, global uint* indices, int count)
+{
+	const int2 pos = { get_global_id(0), get_global_id(1) };
+	int vFound = 0;
+
+	float zCorr;
+
+	for (uint i = 0; i < count; i++)
+	{
+		Vertex v[] = { projVert[indices[i * 3]], projVert[indices[i * 3 + 1]], projVert[indices[i * 3 + 2]] };
+
+		float left = fmin3(v[0].vals[0], v[1].vals[0], v[2].vals[0]);
+		if (pos.x < left)
+			continue;
+		float top = fmin3(v[0].vals[1], v[1].vals[1], v[2].vals[1]);
+		if (pos.y < top)
+			continue;
+		float right = fmax3(v[0].vals[0], v[1].vals[0], v[2].vals[0]);
+		if (pos.x > right)
+			continue;
+		float bottom = fmax3(v[0].vals[1], v[1].vals[1], v[2].vals[1]);
+		if (pos.y > bottom)
+			continue;
+
+		float w[3];
+		w[0] = edgeFunction(loc(v[1]), loc(v[2]), convert_float3(pos.xyx));
+		if (w[0] < 0)
+			continue;
+		w[1] = edgeFunction(loc(v[2]), loc(v[0]), convert_float3(pos.xyx));
+		if (w[1] < 0)
+			continue;
+		w[2] = edgeFunction(loc(v[0]), loc(v[1]), convert_float3(pos.xyx));
+		if (w[2] < 0)
+			continue;
+
+		float area = 1 / edgeFunction(loc(v[0]), loc(v[1]), loc(v[2]));
+		w[0] *= area;
+		w[1] *= area;
+		w[2] *= area;
+
+		zCorr = 1 / (w[0] * v[0].vals[14] + w[1] * v[1].vals[14] + w[2] * v[2].vals[14]);
+		half z = zCorr * (w[0] * v[0].vals[2] + w[1] * v[1].vals[2] + w[2] * v[2].vals[2]);
+
+		if (z >= pix->depth)
+			continue;
+
+		pix->depth = z;
+
+		vFound = 1;
+		*vOut = vadd(vadd(
+			vmul(v[0], w[0]),
+			vmul(v[1], w[1])),
+			vmul(v[2], w[2]));
+
+		float3 l = loc(*vOut);
+		vOut->f16 *= zCorr;
+		vset3(vOut, l, 0);
+	}
+
+	return vFound;
+}
+
+Triangle calcTri()
+{
+
+}
+
+#define sample(t) sampleTexture(t, uv(v))
+#define sampleNormal(t) (sampleTexture(t, uv(v))*2-(float3)1)
+
+#define MAT_VARIABLES()			   \
+	float3 BaseColor = (float3)1;  \
+	float  Metallic = 0.5;         \
+	float  Roughness = 0.5;        \
+	float3 Normal = (float3)(0, 0, 1);
+
+//WorldSettings worldSettings = *_worldSettings;
+
+#define MAT_HEADER() \
+	const int2 pos = { get_global_id(0), get_global_id(1) }; \
+	global Pixel* pix = getPixel(canvas, pos); \
+	Vertex v;   \
+				\
+	if (FindNearestVertex(&v, pix, vert, projVert, indices, worldSettings->triangleCount)) \
+	{ \
+		MAT_VARIABLES()
+
+#define MAT_FOOTER() \
+		Normal = normal(v)*Normal.z + tangent(v)*Normal.x + binormal(v)*Normal.y; \
+		float ambient = clamp(-dot(worldSettings->lightDir, Normal), 0.1f, 1.f); \
+																				 \
+		float3 finalColor = BaseColor * (ambient + 0.1f); \
+		pix->color = convert_uchar4((float4)(clamp(finalColor.x * 255, 0.f, 255.f), clamp(finalColor.y * 255, 0.f, 255.f), clamp(finalColor.z * 255, 0.f, 255.f), 255.f));\
+	}
+	
+#define MAT_ARGS() global RenderTexture* canvas, global WorldSettings* worldSettings, global Vertex* vert, global Vertex* projVert, global uint* indices //, global Triangle* tri 
+#define MAT_FUNC kernel void 
+
+/*
+
+MAT_FUNC(ab)
+{
+	MAT_HEADER()
+
+
+
+
+		// $BODY$
+
+
+
+	
+
+	
+	MAT_FOOTER()
+}
+
+*/
+/*
 void rasterizeOne(const Triangle t, const int2 pos, Pixel* pix, const WorldSettings* worldSettings, read_only image2d_t basetex, read_only image2d_t normaltex)
 {
 	if (t.pmin.x > pos.x || t.pmin.y > pos.y || t.pmax.x < pos.x || t.pmax.y < pos.y)
@@ -102,3 +235,4 @@ kernel void rasterize(global RenderTexture* canvas, global WorldSettings* _world
 
 	*pix = _pix;
 }
+*/

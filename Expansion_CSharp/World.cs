@@ -23,15 +23,14 @@ namespace Expansion_CSharp
 
         public void Tick()
         {
-            var r = objects[1].Transform.Rotation;
+            var r = objects.Last().Transform.Rotation;
             r.values[0] += 0.01f;
-            objects[1].Transform.Rotation = r;
+            objects.Last().Transform.Rotation = r;
 
             Renderer.Clear();
             foreach(var obj in objects)
             {
-                obj.Material.Activate();
-                Renderer.RenderMesh(obj.Mesh, obj.Transform);
+                Renderer.RenderMesh(obj.Mesh, obj.Material, obj.Transform);
             }
         }
 

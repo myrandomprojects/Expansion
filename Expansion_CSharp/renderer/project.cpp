@@ -14,8 +14,32 @@ ushort max3(ushort a, ushort b, ushort c)
 	return (a > b && a > c ? a : (b > c ? b : c));
 }
 
-kernel void project(global Vertex* vertices, global uint* indices, global Transform* transformValues, global WorldSettings* _worldSettings, global Triangle* triangles)
+//, global Triangle* triangles
+//, global uint* indices
+kernel void project(global Vertex* vertices, global Vertex* outVertices, global Transform* transformValues, global WorldSettings* worldSettings)
 {
+	worldSettings->triangleCount = get_global_size(0) / 3;
+	float2 screenSize = worldSettings->camera.screenSize;
+	matrix transform = get_transform_matrix(*transformValues);
+	matrix worldrot = matrix_rotation(transformValues->rot.xyz);
+
+	Vertex out = vertices[get_global_id(0)];
+
+	vset3(&out, vec_mat_mul(loc(out).xyzz, transform).xyz, 0);
+	vset3(&out, vec_mat_mul(normal(out).xyzz, worldrot).xyz, 3);
+	vset3(&out, vec_mat_mul(tangent(out).xyzz, worldrot).xyz, 6);
+	vset3(&out, vec_mat_mul(binormal(out).xyzz, worldrot).xyz, 9);
+
+	float z = out.vals[2];
+	float w = 1 / z;
+	out.f16 *= w;
+	float2 xy = (float2)(out.vals[0], out.vals[1]);
+	vset3(&out, (float3)(xy*screenSize + screenSize * 0.5f, (z - 0.5) / (200 - 0.5)), 0);
+	out.vals[14] = w;
+
+	outVertices[get_global_id(0)] = out;
+}
+/*
 	indices += get_global_id(0) * 3;
 	float2 screenSize = _worldSettings->camera.screenSize;
 
@@ -64,3 +88,4 @@ kernel void project(global Vertex* vertices, global uint* indices, global Transf
 	triangles[get_global_id(0)] = t;
 	_worldSettings->triangleCount = get_global_size(0);
 }
+*/

@@ -118,6 +118,21 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="Buff_White" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Buff_White.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="MaterialBase" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\MaterialBase.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Minion" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Minion.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="MinionMaterial" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\MinionMaterial.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="RockMaterial" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\RockMaterial.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="SM_Rock_Chunk" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\SM_Rock_Chunk_LowPoly_Internal.OBJ.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
@@ -126,5 +141,20 @@
   </data>
   <data name="T_Brick_Clay_Old_N" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\T_Brick_Clay_Old_N.BMP;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="T_Buff_White_D" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\T_Buff_White_D.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="T_Buff_White_N" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\T_Buff_White_N.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="T_Minion_Dawn_Melee_D" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\T_Minion_Dawn_Melee_D.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="T_Minion_Dawn_Melee_MASK01" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\T_Minion_Dawn_Melee_MASK01.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="T_Minion_Dawn_Melee_N" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\T_Minion_Dawn_Melee_N.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

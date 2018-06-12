@@ -18,22 +18,37 @@ namespace Expansion_CSharp
 
             Renderer.Initialize();
 
+            /*
             World.Current.Spawn(
-                new MeshActor(Mesh.Cube, Renderer.ResourceTextures[0]),
+                new MeshActor(Mesh.Plane, Content.LoadMaterial("MinionMaterial")),
                 new Transform(
-                    new Vector(2, 0, 7.2f),
+                    new Vector(0, 0, 1),
+                    new Vector(0, 0, 0),
+                    new Vector(1, 1, 1)
+                )
+            );
+            */
+
+            World.Current.Spawn(
+                new MeshActor(Mesh.Cube, Content.LoadMaterial("RockMaterial")),
+                new Transform(
+                    new Vector(0.3f, 0, 2.1f),
                     new Vector(2.4f, 2.3f, 4.4f),
                     new Vector(1, 1, 1)
                 )
             );
+            /*
             World.Current.Spawn(
-                new MeshActor(Mesh.SM_Rock_Chunk, Renderer.ResourceTextures[0]),
+                new MeshActor(Mesh.Buff_White, Content.LoadMaterial("MinionMaterial")),
                 new Transform(
-                    new Vector(1, 0, 8),
+                    new Vector(0.2f, 0.3f, 3),
                     new Vector(1, 0, 0),
                     new Vector(0.01f, 0.01f, 0.01f)
                 )
             );
+            */
+
+
             World.Current.Tick();
 
             var bmp = Renderer.Out();
