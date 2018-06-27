@@ -30,6 +30,8 @@ void write_imageui(image2d_t, int2, uint4);
 #define COORD(x,y) (int2)(x,y)
 #endif
 
+#define ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
+
 typedef struct {
 	uchar4 color;
 	half depth, gleam;
@@ -42,16 +44,22 @@ typedef struct {
 typedef union {
 	float16 f16;
 	float vals[16];
+	struct {
+		float4 loc;
+		float3 normal;
+		float2 uv;
+		float3 tangent;
+	};
 	//float4 loc;
 	//float3 normal, tangent, binormal;
 	//float2 uv, screenPos;
 } Vertex;
 
-float3 loc(const Vertex v) { return (float3)(v.vals[0], v.vals[1], v.vals[2]); }
-float3 normal(const Vertex v) { return (float3)(v.vals[3], v.vals[4], v.vals[5]); }
-float3 tangent(const Vertex v) { return (float3)(v.vals[6], v.vals[7], v.vals[8]); }
-float3 binormal(const Vertex v) { return (float3)(v.vals[9], v.vals[10], v.vals[11]); }
-float2 uv(const Vertex v) { return (float2)(v.vals[12], v.vals[13]); }
+float3 loc(const Vertex v) { return v.loc.xyz; }
+float3 normal(const Vertex v) { return v.normal; }
+float3 tangent(const Vertex v) { return v.tangent; }
+float3 binormal(const Vertex v) { return (float3)(v.vals[13], v.vals[14], v.vals[15]); }
+float2 uv(const Vertex v) { return v.uv; }
 
 void vset2(Vertex* v, float2 f, int i) { v->vals[i] = f.x; v->vals[i + 1] = f.y; }
 void vset3(Vertex* v, float3 f, int i) { v->vals[i] = f.x; v->vals[i + 1] = f.y; v->vals[i + 2] = f.z; }

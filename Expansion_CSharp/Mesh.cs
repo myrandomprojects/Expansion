@@ -53,10 +53,10 @@ namespace Expansion_CSharp
         int tCount = 0;
 
         public Vector Position { get { return new Vector(values[0], values[1], values[2]); } set { values[0] = value.values[0]; values[1] = value.values[1]; values[2] = value.values[2]; } }
-        public Vector Normal { get { return new Vector(values[3], values[4], values[5]); } set { values[3] = value.values[0]; values[4] = value.values[1]; values[5] = value.values[2]; } }
-        public Vector Tangent { get { return new Vector(values[6], values[7], values[8]); } set { values[6] = value.values[0]; values[7] = value.values[1]; values[8] = value.values[2]; } }
-        public Vector Binormal { get { return new Vector(values[9], values[10], values[11]); } set { values[9] = value.values[0]; values[10] = value.values[1]; values[11] = value.values[2]; } }
-        public Vector TexUV { get { return new Vector(values[12], values[13]); } set { values[12] = value.values[0]; values[13] = value.values[1]; } }
+        public Vector Normal { get { return new Vector(values[4], values[5], values[6]); } set { values[4] = value.values[0]; values[5] = value.values[1]; values[6] = value.values[2]; } }
+        public Vector TexUV { get { return new Vector(values[8], values[9]); } set { values[8] = value.values[0]; values[9] = value.values[1]; } }
+        public Vector Tangent { get { return new Vector(values[10], values[11], values[12]); } set { values[10] = value.values[0]; values[11] = value.values[1]; values[12] = value.values[2]; } }
+        public Vector Binormal { get { return new Vector(values[13], values[14], values[15]); } set { values[13] = value.values[0]; values[14] = value.values[1]; values[15] = value.values[2]; } }
 
         public Vertex(Vector pos, Vector norm, Vector uv)
         {

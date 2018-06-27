@@ -25,17 +25,16 @@ kernel void project(global Vertex* vertices, global Vertex* outVertices, global 
 
 	Vertex out = vertices[get_global_id(0)];
 
-	vset3(&out, vec_mat_mul(loc(out).xyzz, transform).xyz, 0);
-	vset3(&out, vec_mat_mul(normal(out).xyzz, worldrot).xyz, 3);
-	vset3(&out, vec_mat_mul(tangent(out).xyzz, worldrot).xyz, 6);
-	vset3(&out, vec_mat_mul(binormal(out).xyzz, worldrot).xyz, 9);
+	out.loc = vec_mat_mul(out.loc.xyzz, transform);
+	out.normal = vec_mat_mul(normal(out).xyzz, worldrot).xyz;
+	out.tangent = vec_mat_mul(tangent(out).xyzz, worldrot).xyz;
+	vset3(&out, vec_mat_mul(binormal(out).xyzz, worldrot).xyz, 13);
 
-	float z = out.vals[2];
-	float w = 1 / z;
+	float z = out.vals[2], w = 1 / z;
+
 	out.f16 *= w;
-	float2 xy = (float2)(out.vals[0], out.vals[1]);
-	vset3(&out, (float3)(xy*screenSize + screenSize * 0.5f, (z - 0.5) / (200 - 0.5)), 0);
-	out.vals[14] = w;
+
+	out.loc = (float4)(out.loc.xy*screenSize + screenSize * 0.5f, (z - 0.5) / (200 - 0.5), w);
 
 	outVertices[get_global_id(0)] = out;
 }

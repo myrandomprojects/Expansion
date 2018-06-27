@@ -19,16 +19,19 @@ float fmax3(float a, float b, float c)
 
 float3 sampleTexture(read_only image2d_t tex, const float2 uv)
 {
-	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_FILTER_LINEAR;
+	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
 	float3 color = convert_float3(read_imageui(tex, texsampler, uv).zyx) / 255;
 
 	return color;
 }
 
-float3 sampleTextureWithFilter(read_only image2d_t tex, const float2 uv)
+float3 sampleTextureWithFilter(read_only image2d_t tex, const float2* samples, const int sCount)
 {
-	return sampleTexture(tex, uv);
+	float3 color = sampleTexture(tex, samples[0]) * 3.5f;
+	for (int i = 1; i < sCount; i++)
+		color += sampleTexture(tex, samples[i]);
+	return color / (sCount + 2.5f);
 }
 /*
 float3 pixelShader(const Vertex v, const WorldSettings* worldSettings, read_only image2d_t basetex, read_only image2d_t normaltex)
@@ -49,9 +52,9 @@ float edgeFunction(float3 a, float3 b, float3 c)
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-int FindNearestVertex(Vertex* vOut, global Pixel* pix, global Vertex* vert, global Vertex* projVert, global uint* indices, int count)
+int FindNearestVertex(Vertex* vOut, float2* uvSamples, int* sCount, global Pixel* pix, global Vertex* vert, global Vertex* projVert, global uint* indices, int count)
 {
-	const int2 pos = { get_global_id(0), get_global_id(1) };
+	const float2 pos = { get_global_id(0), get_global_id(1) };
 	int vFound = 0;
 
 	float zCorr;
@@ -74,22 +77,22 @@ int FindNearestVertex(Vertex* vOut, global Pixel* pix, global Vertex* vert, glob
 			continue;
 
 		float w[3];
-		w[0] = edgeFunction(loc(v[1]), loc(v[2]), convert_float3(pos.xyx));
+		w[0] = edgeFunction(loc(v[1]), loc(v[2]), pos.xyx);
 		if (w[0] < 0)
 			continue;
-		w[1] = edgeFunction(loc(v[2]), loc(v[0]), convert_float3(pos.xyx));
+		w[1] = edgeFunction(loc(v[2]), loc(v[0]), pos.xyx);
 		if (w[1] < 0)
 			continue;
-		w[2] = edgeFunction(loc(v[0]), loc(v[1]), convert_float3(pos.xyx));
+		w[2] = edgeFunction(loc(v[0]), loc(v[1]), pos.xyx);
 		if (w[2] < 0)
 			continue;
 
-		float area = 1 / edgeFunction(loc(v[0]), loc(v[1]), loc(v[2]));
-		w[0] *= area;
-		w[1] *= area;
-		w[2] *= area;
+		float areaInv = 1 / edgeFunction(loc(v[0]), loc(v[1]), loc(v[2]));
+		w[0] *= areaInv;
+		w[1] *= areaInv;
+		w[2] *= areaInv;
 
-		zCorr = 1 / (w[0] * v[0].vals[14] + w[1] * v[1].vals[14] + w[2] * v[2].vals[14]);
+		zCorr = 1 / (w[0] * v[0].loc.w + w[1] * v[1].loc.w + w[2] * v[2].loc.w);
 		half z = zCorr * (w[0] * v[0].vals[2] + w[1] * v[1].vals[2] + w[2] * v[2].vals[2]);
 
 		if (z >= pix->depth)
@@ -106,6 +109,24 @@ int FindNearestVertex(Vertex* vOut, global Pixel* pix, global Vertex* vert, glob
 		float3 l = loc(*vOut);
 		vOut->f16 *= zCorr;
 		vset3(vOut, l, 0);
+
+		uvSamples[0] = vOut->uv;
+
+		*sCount = 1;
+		float values[] = { -0.375, -0.125, 0.125, 0.375 };
+		for (int di = 0; di < ARRAYSIZE(values); di++)
+			for (int dj = 0; dj < ARRAYSIZE(values); dj++)
+			{
+				float2 tPos = pos + (float2)(values[di], values[dj]);
+
+				w[0] = areaInv * edgeFunction(loc(v[1]), loc(v[2]), convert_float3(tPos.xyx));
+				w[1] = areaInv * edgeFunction(loc(v[2]), loc(v[0]), convert_float3(tPos.xyx));
+				w[2] = areaInv * edgeFunction(loc(v[0]), loc(v[1]), convert_float3(tPos.xyx));
+				if (w[0] < 0 || w[1] < 0 || w[2] < 0)
+					continue;
+
+				uvSamples[(*sCount)++] = zCorr*(v[0].uv*w[0] + v[1].uv*w[1] + v[2].uv*w[2]);
+			}
 	}
 
 	return vFound;
@@ -116,8 +137,8 @@ Triangle calcTri()
 
 }
 
-#define sample(t) sampleTexture(t, uv(v))
-#define sampleNormal(t) (sampleTexture(t, uv(v))*2-(float3)1)
+#define sample(t) sampleTextureWithFilter(t, uvSamples, sCount)
+#define sampleNormal(t) (sampleTextureWithFilter(t, uvSamples, sCount)*2-(float3)1)
 
 #define MAT_VARIABLES()			   \
 	float3 BaseColor = (float3)1;  \
@@ -131,8 +152,9 @@ Triangle calcTri()
 	const int2 pos = { get_global_id(0), get_global_id(1) }; \
 	global Pixel* pix = getPixel(canvas, pos); \
 	Vertex v;   \
+	float2 uvSamples[17]; int sCount=0; \
 				\
-	if (FindNearestVertex(&v, pix, vert, projVert, indices, worldSettings->triangleCount)) \
+	if (FindNearestVertex(&v, uvSamples, &sCount, pix, vert, projVert, indices, worldSettings->triangleCount)) \
 	{ \
 		MAT_VARIABLES()
 
