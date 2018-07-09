@@ -1,6 +1,6 @@
 #ifdef _WIN32
 
-#include "matrix.h"
+#include "types.h"
 
 #endif
 
@@ -17,22 +17,33 @@ float fmax3(float a, float b, float c)
 }
 
 
+
+
+
+typedef struct {
+	float2 samples[17];
+	int count;
+} UVSamples;
+
+
 float3 sampleTexture(read_only image2d_t tex, const float2 uv)
 {
 	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
-	float3 color = convert_float3(read_imageui(tex, texsampler, uv).zyx) / 255;
+	float3 color = convert_float3(read_imageui(tex, texsampler, uv).zyx) * (1.f / 255);
 
 	return color;
 }
 
-float3 sampleTextureWithFilter(read_only image2d_t tex, const float2* samples, const int sCount)
+float3 sampleTextureWithFilter(read_only image2d_t tex, const UVSamples* samples)
 {
-	float3 color = sampleTexture(tex, samples[0]) * 3.5f;
-	for (int i = 1; i < sCount; i++)
-		color += sampleTexture(tex, samples[i]);
-	return color / (sCount + 2.5f);
+	float3 color = sampleTexture(tex, samples->samples[0]) * 3.5f;
+	for (int i = 1; i < samples->count; i++)
+		color += sampleTexture(tex, samples->samples[i]);
+	return color * (1 / (samples->count + 2.5f));
 }
+
+float4 reflect(float4 d, float4 n) { return d - n * (dot(d, n) * 2); }
 /*
 float3 pixelShader(const Vertex v, const WorldSettings* worldSettings, read_only image2d_t basetex, read_only image2d_t normaltex)
 {
@@ -45,23 +56,10 @@ float3 pixelShader(const Vertex v, const WorldSettings* worldSettings, read_only
 
 	return basecolor * (ambient + 0.1f);
 }
-*/
 
-float edgeFunction(float3 a, float3 b, float3 c)
-{
-	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
-}
 
-int FindNearestVertex(Vertex* vOut, float2* uvSamples, int* sCount, global Pixel* pix, global Vertex* vert, global Vertex* projVert, global uint* indices, int count)
-{
-	const float2 pos = { get_global_id(0), get_global_id(1) };
-	int vFound = 0;
 
-	float zCorr;
 
-	for (uint i = 0; i < count; i++)
-	{
-		Vertex v[] = { projVert[indices[i * 3]], projVert[indices[i * 3 + 1]], projVert[indices[i * 3 + 2]] };
 
 		float left = fmin3(v[0].vals[0], v[1].vals[0], v[2].vals[0]);
 		if (pos.x < left)
@@ -76,69 +74,122 @@ int FindNearestVertex(Vertex* vOut, float2* uvSamples, int* sCount, global Pixel
 		if (pos.y > bottom)
 			continue;
 
-		float w[3];
-		w[0] = edgeFunction(loc(v[1]), loc(v[2]), pos.xyx);
-		if (w[0] < 0)
+
+
+
+
+*/
+
+
+
+
+
+
+void vSwap(VertexOut* a, VertexOut* b)
+{
+	VertexOut t = *a;
+	*a = *b;
+	*b = t;
+}
+
+half edgeFunction(half4 a, half4 b, half4 c)
+{
+	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+}
+
+int FindNearestVertex(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, global Triangle* triangles, int count)
+{
+	const half2 pos = { get_global_id(0), get_global_id(1) };
+	int vFound = 0;
+
+	float zCorr;
+
+	for (uint pI = 0; pI < count; pI++)
+	{
+		//TriPack pack = tri[pI];
+		Triangle tri = triangles[pI];
+
+		if (dot(tri.v[0].loc, tri.v[0].loc) == 0)
 			continue;
-		w[1] = edgeFunction(loc(v[2]), loc(v[0]), pos.xyx);
-		if (w[1] < 0)
-			continue;
-		w[2] = edgeFunction(loc(v[0]), loc(v[1]), pos.xyx);
-		if (w[2] < 0)
-			continue;
+		//if (pos.x < pack.pmin.x || pos.y < pack.pmin.y || pos.x > pack.pmax.x || pos.y > pack.pmax.y)
+		//	continue;
 
-		float areaInv = 1 / edgeFunction(loc(v[0]), loc(v[1]), loc(v[2]));
-		w[0] *= areaInv;
-		w[1] *= areaInv;
-		w[2] *= areaInv;
+		//for (uint i = 0; i < pack.tCount; i++)
+		{
+			VertexOut* v = tri.v;
 
-		zCorr = 1 / (w[0] * v[0].loc.w + w[1] * v[1].loc.w + w[2] * v[2].loc.w);
-		half z = zCorr * (w[0] * v[0].vals[2] + w[1] * v[1].vals[2] + w[2] * v[2].vals[2]);
+			half w[3];
 
-		if (z >= pix->depth)
-			continue;
-
-		pix->depth = z;
-
-		vFound = 1;
-		*vOut = vadd(vadd(
-			vmul(v[0], w[0]),
-			vmul(v[1], w[1])),
-			vmul(v[2], w[2]));
-
-		float3 l = loc(*vOut);
-		vOut->f16 *= zCorr;
-		vset3(vOut, l, 0);
-
-		uvSamples[0] = vOut->uv;
-
-		*sCount = 1;
-		float values[] = { -0.375, -0.125, 0.125, 0.375 };
-		for (int di = 0; di < ARRAYSIZE(values); di++)
-			for (int dj = 0; dj < ARRAYSIZE(values); dj++)
+			w[0] = -edgeFunction(v[1].loc, v[2].loc, pos.xyxy);
+			w[1] = -edgeFunction(v[2].loc, v[0].loc, pos.xyxy);
+			w[2] = -edgeFunction(v[0].loc, v[1].loc, pos.xyxy);
+			
+			if (w[0] < 0 || w[1] < 0 || w[2] < 0)
 			{
-				float2 tPos = pos + (float2)(values[di], values[dj]);
-
-				w[0] = areaInv * edgeFunction(loc(v[1]), loc(v[2]), convert_float3(tPos.xyx));
-				w[1] = areaInv * edgeFunction(loc(v[2]), loc(v[0]), convert_float3(tPos.xyx));
-				w[2] = areaInv * edgeFunction(loc(v[0]), loc(v[1]), convert_float3(tPos.xyx));
-				if (w[0] < 0 || w[1] < 0 || w[2] < 0)
+				if (v[3].loc.z == -1)
 					continue;
 
-				uvSamples[(*sCount)++] = zCorr*(v[0].uv*w[0] + v[1].uv*w[1] + v[2].uv*w[2]);
+				v++;
+				vSwap(v + 1, v + 2);
+
+				w[0] = -edgeFunction(v[1].loc, v[2].loc, pos.xyxy);
+				w[1] = -edgeFunction(v[2].loc, v[0].loc, pos.xyxy);
+				w[2] = -edgeFunction(v[0].loc, v[1].loc, pos.xyxy);
+
+				if (w[0] < 0 || w[1] < 0 || w[2] < 0)
+					continue;
 			}
+
+			half areaInv = 1 / -edgeFunction(v[0].loc, v[1].loc, v[2].loc);
+			w[0] *= areaInv;
+			w[1] *= areaInv;
+			w[2] *= areaInv;
+
+			zCorr = 1 / (w[0] * v[0].loc.w + w[1] * v[1].loc.w + w[2] * v[2].loc.w);
+			half z = (w[0] * v[0].vals[2] + w[1] * v[1].vals[2] + w[2] * v[2].vals[2]);
+
+			if (z >= pix->depth)
+				continue;
+
+			pix->depth = z;
+
+			//zCorr = 1;
+
+			z *= zCorr;
+
+			vFound = 1;
+			vOut->f16 = v[0].f16*w[0] + v[1].f16*w[1] + v[2].f16*w[2];
+
+			half4 l = vOut->loc;
+			vOut->f16 *= zCorr;
+			vOut->loc = l;
+
+			uvSamples->samples[0] = convert_float2(vOut->uv);
+			uvSamples->count = 1;
+			
+			float values[] = { -0.375, -0.125, 0.125, 0.375 };
+			for (int di = 0; di < ARRAYSIZE(values); di++)
+				for (int dj = 0; dj < ARRAYSIZE(values); dj++)
+				{
+					half2 tPos = pos + (half2)(values[di], values[dj]);
+
+					w[0] = areaInv * -edgeFunction(v[1].loc, v[2].loc, tPos.xyxy);
+					w[1] = areaInv * -edgeFunction(v[2].loc, v[0].loc, tPos.xyxy);
+					w[2] = areaInv * -edgeFunction(v[0].loc, v[1].loc, tPos.xyxy);
+					if (w[0] < 0 || w[1] < 0 || w[2] < 0)
+						continue;
+
+					uvSamples->samples[uvSamples->count++] = convert_float2((v[0].uv*w[0] + v[1].uv*w[1] + v[2].uv*w[2])) * zCorr;
+				}
+			//*/
+		}
 	}
 
 	return vFound;
 }
 
-Triangle calcTri()
-{
-
-}
-
-#define sample(t) sampleTextureWithFilter(t, uvSamples, sCount)
-#define sampleNormal(t) (sampleTextureWithFilter(t, uvSamples, sCount)*2-(float3)1)
+#define sample(t) sampleTextureWithFilter(t, &s)
+#define sampleNormal(t) (sampleTextureWithFilter(t, &s)*2-(float3)1)
 
 #define MAT_VARIABLES()			   \
 	float3 BaseColor = (float3)1;  \
@@ -150,23 +201,24 @@ Triangle calcTri()
 
 #define MAT_HEADER() \
 	const int2 pos = { get_global_id(0), get_global_id(1) }; \
-	global Pixel* pix = getPixel(canvas, pos); \
+	Pixel pix = *getPixel(canvas, pos); \
 	Vertex v;   \
-	float2 uvSamples[17]; int sCount=0; \
+	UVSamples s; s.count = 0; \
 				\
-	if (FindNearestVertex(&v, uvSamples, &sCount, pix, vert, projVert, indices, worldSettings->triangleCount)) \
+	if (FindNearestVertex(&v,  &s, &pix, tri, worldSettings->triangleCount)) \
 	{ \
 		MAT_VARIABLES()
 
 #define MAT_FOOTER() \
 		Normal = normal(v)*Normal.z + tangent(v)*Normal.x + binormal(v)*Normal.y; \
-		float ambient = clamp(-dot(worldSettings->lightDir, Normal), 0.1f, 1.f); \
+		float ambient = clamp(-dot(worldSettings->lightDir, Normal)*0.4f+0.6f, 0.1f, 1.f); \
 																				 \
-		float3 finalColor = BaseColor * (ambient + 0.1f); \
-		pix->color = convert_uchar4((float4)(clamp(finalColor.x * 255, 0.f, 255.f), clamp(finalColor.y * 255, 0.f, 255.f), clamp(finalColor.z * 255, 0.f, 255.f), 255.f));\
+		float3 finalColor = BaseColor * (ambient + 0.2); \
+		pix.color = convert_uchar4((float4)(clamp(finalColor.x * 255, 0.f, 255.f), clamp(finalColor.y * 255, 0.f, 255.f), clamp(finalColor.z * 255, 0.f, 255.f), 255.f));\
+		getPixel(canvas, pos)[0] = pix; \
 	}
 	
-#define MAT_ARGS() global RenderTexture* canvas, global WorldSettings* worldSettings, global Vertex* vert, global Vertex* projVert, global uint* indices //, global Triangle* tri 
+#define MAT_ARGS() global RenderTexture* canvas, global WorldSettings* worldSettings, global Triangle* tri //, global Triangle* tri 
 #define MAT_FUNC kernel void 
 
 /*

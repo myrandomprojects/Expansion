@@ -61,6 +61,12 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="GPURenderer.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>GPURenderer.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Landscape.cs" />
     <Compile Include="Material.cs" />
     <Compile Include="Mesh.cs" />
     <Compile Include="MeshActor.cs" />
@@ -77,6 +83,10 @@
     <Compile Include="World.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GPURenderer.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>GPURenderer.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -100,8 +110,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="Resources\Minion.OBJ" />
-    <None Include="Resources\SM_Rock_Chunk_LowPoly_Internal.OBJ" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -114,9 +122,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\SM_Rock_Chunk_LowPoly_Internal.OBJ.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\TextFile1.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\RockMaterial.txt" />
@@ -147,6 +152,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\T_Buff_White_N.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\clear.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\finalize.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\matrix.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\project.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\rasterize.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SimpleMaterial.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

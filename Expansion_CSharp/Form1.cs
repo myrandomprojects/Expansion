@@ -30,11 +30,11 @@ namespace Expansion_CSharp
             */
 
             World.Current.Spawn(
-                new MeshActor(Mesh.SM_Rock_Chunk, Content.LoadMaterial("RockMaterial")),
+                new MeshActor(Mesh.Cube, Content.LoadMaterial("SimpleMaterial")),
                 new Transform(
-                    new Vector(0.3f, 0, 7.1f),
+                    new Vector(0.3f, 0, 2),
                     new Vector(2.4f, 2.3f, 4.4f),
-                    new Vector(0.01f, 0.01f, 0.01f)
+                    new Vector(1, 1, 1)
                 )
             );
             /*

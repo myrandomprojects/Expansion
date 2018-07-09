@@ -52,7 +52,13 @@ namespace Expansion_CSharp
 
             var mats = Content.LoadMaterials();
 
-            string code = ReadFilesOfType("*.h") + ReadFilesOfType("*.cpp") + string.Join("\r\n\r\n\r\n\r\n\r\n", mats.Select(mat => mat.Code));
+            string code = GPURenderer.types
+                + GPURenderer.matrix
+                + GPURenderer.clear
+                + GPURenderer.project
+                + GPURenderer.rasterize
+                + GPURenderer.finalize
+                + string.Join("\r\n\r\n\r\n\r\n\r\n", mats.Select(mat => mat.Code));
             CLCalc.Program.Compile(code, out List<string> logs);
 
             clear = new CLCalc.Program.Kernel("clear");
@@ -63,7 +69,7 @@ namespace Expansion_CSharp
             renderTexture = new CLCalc.Program.Variable(typeof(float), 2 * ScreenSize[0] * ScreenSize[1]);
             clearColor = new CLCalc.Program.Variable(new byte[4] { 100, 149, 237, 255 });
             screen = new CLCalc.Program.Image2D(ComputeImageChannelType.UnsignedInt8, ScreenSize[0], ScreenSize[1]);
-            worldSettings = new CLCalc.Program.Variable(GetWorldSettings(new Vector(3, 12, 2)));
+            worldSettings = new CLCalc.Program.Variable(GetWorldSettings(new Vector(3, -12, 2)));
             projVerticesBuff = new CLCalc.Program.Variable(new float[16 * 100000]);
             trianglesBuff = new CLCalc.Program.Variable(new float[64 * 10000]);
 
@@ -95,9 +101,8 @@ namespace Expansion_CSharp
 
             mesh.LoadBuffers();
 
-            project.Execute(new CLCalc.Program.Variable[] { mesh.VBuffer, projVerticesBuff, transform, worldSettings }, mesh.Indices.Length);
-            //rasterize.Execute(new CLCalc.Program.MemoryObject[] { renderTexture, worldSettings, trianglesBuff, Texture0, Texture1 }, ScreenSize);
-            mat.Rasterize(renderTexture, worldSettings, mesh.VBuffer, projVerticesBuff, mesh.IBuffer, ScreenSize);
+            project.Execute(new CLCalc.Program.Variable[] { mesh.VBuffer, mesh.IBuffer, projVerticesBuff, transform, worldSettings }, new int[] { mesh.Indices.Length / 3 });
+            mat.Rasterize(renderTexture, worldSettings, mesh.VBuffer, projVerticesBuff, mesh.IBuffer, ScreenSize); 
         }
 
         public static Bitmap Out()

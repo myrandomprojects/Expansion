@@ -56,7 +56,10 @@ namespace Expansion_CSharp
         {
             var f = new float[projVerticesBuff.OriginalVarLength];
             projVerticesBuff.ReadFromDeviceTo(f);
-            Kernel.Execute(new MemoryObject[] { renderTexture, worldSettings, vertices, projVerticesBuff, indices }.Concat(textures.Select(t => t.GPUResource)).ToArray(), screenSize);
+            string a = "";
+            for (int i = 0; i < 64; i++)
+                a += f[128 + i] + ", ";
+            Kernel.Execute(new MemoryObject[] { renderTexture, worldSettings, projVerticesBuff }.Concat(textures.Select(t => t.GPUResource)).ToArray(), screenSize);
         }
     }
 }

@@ -170,14 +170,14 @@ namespace Expansion_CSharp {
         
         /// <summary>
         ///   Looks up a localized string similar to #MATERIAL
-        ///{
-        ///	BaseColor = COLOR(1,1,1); 
+        ///{	
+        ///	BaseColor = sample(T_Buff_White_D);
         ///
         ///	float3 mask = sample(T_Minion_Dawn_Melee_MASK01);
         ///	Metallic = clamp((float)pow(mask.x, 2), 0.f, 1.f);
         ///	Roughness = mask.y;
         ///	
-        ///	Normal = sampleNormal(T_Minion_Dawn_Melee_N);
+        ///	Normal = sampleNormal(T_Buff_White_N);
         ///}.
         /// </summary>
         internal static string MinionMaterial {
@@ -190,12 +190,21 @@ namespace Expansion_CSharp {
         ///   Looks up a localized string similar to #MATERIAL
         ///{
         ///	BaseColor = sample(T_Brick_Clay_Old_D);
-        ///	Normal    = sample(T_Brick_Clay_Old_N);
+        ///	Normal    = sampleNormal(T_Brick_Clay_Old_N);
         ///}.
         /// </summary>
         internal static string RockMaterial {
             get {
                 return ResourceManager.GetString("RockMaterial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        internal static string SimpleMaterial {
+            get {
+                return ResourceManager.GetString("SimpleMaterial", resourceCulture);
             }
         }
         
