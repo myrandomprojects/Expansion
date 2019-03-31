@@ -97,92 +97,98 @@ half edgeFunction(half4 a, half4 b, half4 c)
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-int FindNearestVertex(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, global Triangle* triangles, int count)
+int TryFind(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, Triangle tri)
 {
 	const half2 pos = { get_global_id(0), get_global_id(1) };
-	int vFound = 0;
 
-	float zCorr;
+	if (dot(tri.v[0].loc, tri.v[0].loc) == 0)
+		return 0;
+	//if (pos.x < pack.pmin.x || pos.y < pack.pmin.y || pos.x > pack.pmax.x || pos.y > pack.pmax.y)
+	//	continue;
 
-	for (uint pI = 0; pI < count; pI++)
+	//for (uint i = 0; i < pack.tCount; i++)
 	{
-		//TriPack pack = tri[pI];
-		Triangle tri = triangles[pI];
+		VertexOut* v = tri.v;
 
-		if (dot(tri.v[0].loc, tri.v[0].loc) == 0)
-			continue;
-		//if (pos.x < pack.pmin.x || pos.y < pack.pmin.y || pos.x > pack.pmax.x || pos.y > pack.pmax.y)
-		//	continue;
+		half w[3];
 
-		//for (uint i = 0; i < pack.tCount; i++)
+		w[0] = -edgeFunction(v[1].loc, v[2].loc, pos.xyxy);
+		w[1] = -edgeFunction(v[2].loc, v[0].loc, pos.xyxy);
+		w[2] = -edgeFunction(v[0].loc, v[1].loc, pos.xyxy);
+
+		if (w[0] < 0 || w[1] < 0 || w[2] < 0)
 		{
-			VertexOut* v = tri.v;
+			if (v[3].loc.z == -1)
+				return 0;
 
-			half w[3];
+			v++;
+			vSwap(v + 1, v + 2);
 
 			w[0] = -edgeFunction(v[1].loc, v[2].loc, pos.xyxy);
 			w[1] = -edgeFunction(v[2].loc, v[0].loc, pos.xyxy);
 			w[2] = -edgeFunction(v[0].loc, v[1].loc, pos.xyxy);
-			
+
 			if (w[0] < 0 || w[1] < 0 || w[2] < 0)
+				return 0;
+		}
+
+		half areaInv = 1 / -edgeFunction(v[0].loc, v[1].loc, v[2].loc);
+		w[0] *= areaInv;
+		w[1] *= areaInv;
+		w[2] *= areaInv;
+
+		float zCorr = 1 / (w[0] * v[0].loc.w + w[1] * v[1].loc.w + w[2] * v[2].loc.w);
+		half z = (w[0] * v[0].vals[2] + w[1] * v[1].vals[2] + w[2] * v[2].vals[2]);
+
+		if (z >= pix->depth)
+			return 0;
+
+		pix->depth = z;
+
+		//zCorr = 1;
+
+		z *= zCorr;
+
+		vOut->f16 = v[0].f16*w[0] + v[1].f16*w[1] + v[2].f16*w[2];
+
+		half4 l = vOut->loc;
+		vOut->f16 *= zCorr;
+		vOut->loc = l;
+
+		uvSamples->samples[0] = convert_float2(vOut->uv);
+		uvSamples->count = 1;
+
+		float values[] = { -0.375, -0.125, 0.125, 0.375 };
+		for (int di = 0; di < ARRAYSIZE(values); di++)
+			for (int dj = 0; dj < ARRAYSIZE(values); dj++)
 			{
-				if (v[3].loc.z == -1)
-					continue;
+				half2 tPos = pos + (half2)(values[di], values[dj]);
 
-				v++;
-				vSwap(v + 1, v + 2);
-
-				w[0] = -edgeFunction(v[1].loc, v[2].loc, pos.xyxy);
-				w[1] = -edgeFunction(v[2].loc, v[0].loc, pos.xyxy);
-				w[2] = -edgeFunction(v[0].loc, v[1].loc, pos.xyxy);
-
+				w[0] = areaInv * -edgeFunction(v[1].loc, v[2].loc, tPos.xyxy);
+				w[1] = areaInv * -edgeFunction(v[2].loc, v[0].loc, tPos.xyxy);
+				w[2] = areaInv * -edgeFunction(v[0].loc, v[1].loc, tPos.xyxy);
 				if (w[0] < 0 || w[1] < 0 || w[2] < 0)
 					continue;
+
+				uvSamples->samples[uvSamples->count++] = convert_float2((v[0].uv*w[0] + v[1].uv*w[1] + v[2].uv*w[2])) * zCorr;
 			}
+		//*/
 
-			half areaInv = 1 / -edgeFunction(v[0].loc, v[1].loc, v[2].loc);
-			w[0] *= areaInv;
-			w[1] *= areaInv;
-			w[2] *= areaInv;
+		return 1;
+	}
+}
 
-			zCorr = 1 / (w[0] * v[0].loc.w + w[1] * v[1].loc.w + w[2] * v[2].loc.w);
-			half z = (w[0] * v[0].vals[2] + w[1] * v[1].vals[2] + w[2] * v[2].vals[2]);
+int FindNearestVertex(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, global Triangle* triangles, int count)
+{
+	int vFound = 0;
 
-			if (z >= pix->depth)
-				continue;
 
-			pix->depth = z;
+	for (uint pI = 0; pI < count; pI++)
+	{
+		vFound += TryFind(vOut, uvSamples, pix, triangles[pI]);
+		//TriPack pack = tri[pI];
+		//Triangle tri = triangles[pI];
 
-			//zCorr = 1;
-
-			z *= zCorr;
-
-			vFound = 1;
-			vOut->f16 = v[0].f16*w[0] + v[1].f16*w[1] + v[2].f16*w[2];
-
-			half4 l = vOut->loc;
-			vOut->f16 *= zCorr;
-			vOut->loc = l;
-
-			uvSamples->samples[0] = convert_float2(vOut->uv);
-			uvSamples->count = 1;
-			
-			float values[] = { -0.375, -0.125, 0.125, 0.375 };
-			for (int di = 0; di < ARRAYSIZE(values); di++)
-				for (int dj = 0; dj < ARRAYSIZE(values); dj++)
-				{
-					half2 tPos = pos + (half2)(values[di], values[dj]);
-
-					w[0] = areaInv * -edgeFunction(v[1].loc, v[2].loc, tPos.xyxy);
-					w[1] = areaInv * -edgeFunction(v[2].loc, v[0].loc, tPos.xyxy);
-					w[2] = areaInv * -edgeFunction(v[0].loc, v[1].loc, tPos.xyxy);
-					if (w[0] < 0 || w[1] < 0 || w[2] < 0)
-						continue;
-
-					uvSamples->samples[uvSamples->count++] = convert_float2((v[0].uv*w[0] + v[1].uv*w[1] + v[2].uv*w[2])) * zCorr;
-				}
-			//*/
-		}
 	}
 
 	return vFound;
