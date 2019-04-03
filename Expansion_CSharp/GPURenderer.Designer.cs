@@ -19,7 +19,7 @@ namespace Expansion_CSharp {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class GPURenderer {
@@ -57,6 +57,43 @@ namespace Expansion_CSharp {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to #ifdef _WIN32
+        ///
+        ///#include &quot;matrix.h&quot;
+        ///
+        ///#endif
+        ///
+        ///typedef struct {
+        ///	int2 binSize;
+        ///	int2 binsCount;
+        ///} BinSettings;
+        ///
+        ///typedef union {
+        ///	ulong4 vec;
+        ///	uchar bytes[32];
+        ///} Batch;
+        ///
+        ///bool rectanglesIntersect(float4 a, float4 b)
+        ///{
+        ///	float2 pt = (b.xy + b.zw);
+        ///
+        ///	return (pt.x &gt;= a.x &amp;&amp; pt.x &lt;= a.x + a.z + b.z
+        ///		&amp;&amp; pt.y &gt;= a.y &amp;&amp; pt.y &lt;= a.y + a.w + b.w);
+        ///}
+        ///
+        ///kernel void bin(
+        ///	//global const Triangle* triangles,
+        ///	global const TriangleBounds* triBounds,
+        ///	global WorldSettings* worldSettings,
+        ///	global Batc [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string bin {
+            get {
+                return ResourceManager.GetString("bin", resourceCulture);
             }
         }
         
@@ -112,39 +149,36 @@ namespace Expansion_CSharp {
         ///   Looks up a localized string similar to #ifdef _WIN32
         ///
         ///#include &quot;types.h&quot;
-        ///struct float16 { float f[16]; };
+        /////struct float16 { float f[16]; };
         ///
+        ///#define MM {
+        ///#define _MM }
+        ///
+        ///#else
+        ///#define MM (float16)(
+        ///#define _MM )
         ///#endif
         ///
-        ///typedef union {
+        ///typedef union MMMM {
         ///	float16 d16;
         ///	float d[16];
         ///	float dd[4][4];
+        ///#ifdef _WIN32
+        ///	MMMM() {}
+        ///	template&lt;class... Targs&gt;
+        ///	MMMM(Targs... args)
+        ///	{
+        ///		float dummy[sizeof...(args)] = { args... };
+        ///		for (int i = 0; i &lt; sizeof...(args); ++i)
+        ///			d[i] = dummy[i];
+        ///	}
+        ///#endif
         ///} matrix;
         ///
-        ///matrix newmatrix(float16 vals)
+        ///inline matrix newmatrix(float16 vals)
         ///{
         ///	matrix m;
-        ///	m.d16 = vals;
-        ///	return m;
-        ///}
-        ///matrix matrix_identity()
-        ///{
-        ///	return newmatrix((float16)(
-        ///		1, 0, 0, 0,
-        ///		0, 1, 0, 0,
-        ///		0, 0, 1, 0,
-        ///		0, 0, 0, 1
-        ///	));
-        ///}
-        ///
-        ///matrix mat_mul(matrix a, matrix b)
-        ///{
-        ///	matrix res;
-        ///	for (int i = 0; i &lt; 4; ++i)
-        ///		for (int j = 0; j &lt; 4; ++j) {
-        ///			res.dd[i][j] = 0;
-        ///			for [rest of string was truncated]&quot;;.
+        ///	m.d16 =  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string matrix {
             get {
@@ -159,21 +193,27 @@ namespace Expansion_CSharp {
         ///
         ///#endif
         ///
+        ///ushort min2(ushort a, ushort b)
+        ///{
+        ///	return a &lt; b ? a : b;
+        ///}
+        ///ushort max2(ushort a, ushort b)
+        ///{
+        ///	return a &gt; b ? a : b;
+        ///}
         ///ushort min3(ushort a, ushort b, ushort c)
         ///{
         ///	return (a &lt; b &amp;&amp; a &lt; c ? a : (b &lt; c ? b : c));
         ///}
-        ///
         ///ushort max3(ushort a, ushort b, ushort c)
         ///{
         ///	return (a &gt; b &amp;&amp; a &gt; c ? a : (b &gt; c ? b : c));
         ///}
         ///
-        /////, global Triangle* triangles
-        /////, global uint* indices
-        ///kernel void project(global Vertex* vertices, global Vertex* outVertices, global Transform* transformValues, global WorldSettings* worldSettings)
+        ///VertexOut clip(VertexOut a, VertexOut b)
         ///{
-        ///	worldSettings-&gt;triangleCount = get_global_size(0) / 3; [rest of string was truncated]&quot;;.
+        ///	half16 res = a.f16 + (b.f16 - a.f16) * ((1 - a.loc.z) / (b.loc.z - a.loc.z));
+        ///	return *(Ver [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string project {
             get {
@@ -184,7 +224,7 @@ namespace Expansion_CSharp {
         /// <summary>
         ///   Looks up a localized string similar to #ifdef _WIN32
         ///
-        ///#include &quot;matrix.h&quot;
+        ///#include &quot;types.h&quot;
         ///
         ///#endif
         ///
@@ -201,11 +241,18 @@ namespace Expansion_CSharp {
         ///}
         ///
         ///
+        ///
+        ///
+        ///
+        ///typedef struct {
+        ///	float2 samples[17];
+        ///	int count;
+        ///} UVSamples;
+        ///
+        ///
         ///float3 sampleTexture(read_only image2d_t tex, const float2 uv)
         ///{
-        ///	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
-        ///
-        ///	float3 color = convert_float3(read_imageui(tex, texsample [rest of string was truncated]&quot;;.
+        ///	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_F [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string rasterize {
             get {
@@ -215,27 +262,28 @@ namespace Expansion_CSharp {
         
         /// <summary>
         ///   Looks up a localized string similar to #ifdef _WIN32
+        ///#pragma once
+        ///#include &lt;cmath&gt;
         ///
         ///#define kernel
+        ///#define local
         ///#define global
         ///#define read_only
         ///#define write_only
         ///#define get_global_id(i) 0
+        ///#define get_global_size(i) 1
+        ///#define get_local_id(i) 0
+        ///#define get_local_size(i) 0
         ///
+        ///#define CLK_LOCAL_MEM_FENCE
+        ///#define CLK_GLOBAL_MEM_FENCE
+        ///#define barrier(x)
+        ///#define async_work_group_copy(target, src, num_elements, out) 0
+        ///#define wait_group_events(n, event)
         ///
-        ///typedef unsigned char uchar;
-        ///typedef unsigned short ushort;
-        ///typedef unsigned int uint;
-        ///typedef unsigned long long ulong;
-        ///typedef float half;
-        ///struct int2 { int x, y; };
-        ///struct float2 { float x, y; };
-        ///struct float3 { float x, y, z; };
-        ///struct float4 { float x, y, z, w; };
-        ///struct float16 { float f[16]; };
-        ///struct uchar4 { uchar x, y, z, w; };
-        ///struct ushort2 { ushort x, y; };
-        ///struct  [rest of string was truncated]&quot;;.
+        ///#define CLK_NORMALIZED_COORDS_TRUE 1
+        ///#define CLK_ADDRESS_NONE 2
+        ///#define CLK_ [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string types {
             get {

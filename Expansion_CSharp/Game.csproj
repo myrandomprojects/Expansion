@@ -174,5 +174,15 @@
   <ItemGroup>
     <None Include="Resources\SimpleMaterial.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\bin.cpp" />
+    <None Include="Resources\level.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Expansion\Expansion.csproj">
+      <Project>{374174db-9d51-4363-9808-9a96cd3f840c}</Project>
+      <Name>Expansion</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

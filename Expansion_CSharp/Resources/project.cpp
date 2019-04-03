@@ -24,7 +24,13 @@ ushort max3(ushort a, ushort b, ushort c)
 VertexOut clip(VertexOut a, VertexOut b)
 {
 	half16 res = a.f16 + (b.f16 - a.f16) * ((1 - a.loc.z) / (b.loc.z - a.loc.z));
-	return *(VertexOut*)&res;
+	return *(VertexOut*)& res;
+}
+VertexOut unclip(VertexOut a, VertexOut b, float* zz)
+{
+	half16 res = a.f16 + (b.f16 - a.f16) * ((zz[1] - zz[0]) / (1 - zz[0]));
+	res[3] = b.loc.w;
+	return *(VertexOut*)& res;
 }
 void swap3(VertexOut *a, VertexOut *b, VertexOut *c)
 {
@@ -54,21 +60,21 @@ typedef enum {
 	Culled = 2, 
 	Invis = 3
 } TriStatus;
-TriStatus Clip(Triangle* tri)
+TriStatus Clip(VertexOut* v)
 {
-	int vis0 = tri->v[0].loc.z >= 1;
-	int vis1 = tri->v[1].loc.z >= 1;
-	int vis2 = tri->v[2].loc.z >= 1;
+	int vis0 = v[0].loc.z >= 1;
+	int vis1 = v[1].loc.z >= 1;
+	int vis2 = v[2].loc.z >= 1;
 
-	if (dot(tri->v[0].loc, cross(tri->v[1].loc - tri->v[0].loc, tri->v[2].loc - tri->v[0].loc)) >= 0)
+	if (dot(v[0].loc, cross(v[1].loc - v[0].loc, v[2].loc - v[0].loc)) >= 0)
 		return Invis;
-	else if (vis0 + vis1 + vis2 == 0)
+	else if (vis0 + vis1 + vis2 == 0 || (v[0].loc.z < 1 && v[1].loc.z < 1 && v[2].loc.z < 1))
 		return Invis;
 	else if (vis0 + vis1 + vis2 == 1)
 	{
 		int iVert = vis0 ? 0 : (vis1 ? 1 : 2);
 		for (int i = 1; i < 3; i++)
-			tri->v[(iVert + i) % 3] = clip(tri->v[iVert], tri->v[(iVert + i) % 3]);
+			v[(iVert + i) % 3] = clip(v[iVert], v[(iVert + i) % 3]);
 		return Normal;
 	}
 	else if (vis0 + vis1 + vis2 == 2)
@@ -77,13 +83,13 @@ TriStatus Clip(Triangle* tri)
 
 		if (iVert != 2)
 		{
-			swap3(tri->v, tri->v + 1, tri->v + 2);
+			swap3(v, v + 1, v + 2);
 			if (iVert == 1)
-				swap3(tri->v, tri->v + 1, tri->v + 2);
+				swap3(v, v + 1, v + 2);
 		}
 
-		tri->v[3] = clip(tri->v[1], tri->v[2]);
-		tri->v[2] = clip(tri->v[0], tri->v[2]);
+		v[3] = clip(v[1], v[2]);
+		v[2] = clip(v[0], v[2]);
 
 		return Culled;
 	}
@@ -92,8 +98,14 @@ TriStatus Clip(Triangle* tri)
 
 }
 
-kernel void project(global Vertex* vertices, global uint* indices, global Triangle* triangles, global Transform* transformValues, global WorldSettings* worldSettings)
-{
+kernel void project(
+	global const Vertex* vertices, 
+	global const uint* indices,
+	global const Transform* transformValues,
+	global WorldSettings* worldSettings,
+	global Triangle* triangles,
+	global TriangleBounds* triBounds
+) {
 	if (get_global_id(0) == 0)
 		worldSettings->triangleCount = get_global_size(0);
 
@@ -108,32 +120,54 @@ kernel void project(global Vertex* vertices, global uint* indices, global Triang
 	int lId = get_local_id(0) % triPerPack;
 
 	Triangle tri;
+	float4 bounds;
 	//#define tri triO[lId]
 
-	tri.v[0].f16 = projectVert(vertices[indices[id * 3 + 0]], transform, worldrot);
-	tri.v[1].f16 = projectVert(vertices[indices[id * 3 + 1]], transform, worldrot);
-	tri.v[2].f16 = projectVert(vertices[indices[id * 3 + 2]], transform, worldrot);
+	//float zz[2];
+	VertexOut v[4];
 
-	tri.v[3].loc.z = -1;
+	v[0].f16 = projectVert(vertices[indices[id * 3 + 0]], transform, worldrot);
+	v[1].f16 = projectVert(vertices[indices[id * 3 + 1]], transform, worldrot);
+	v[2].f16 = projectVert(vertices[indices[id * 3 + 2]], transform, worldrot);
 
-	TriStatus _status = Clip(&tri);
+	v[3].loc.z = 99999;
+
+	TriStatus _status = Clip(v);
+
+	//zz[0] = v[0].vals[2];
+	//zz[1] = v[2].vals[2];
 
 	if (_status != Invis)
 	{
 		for (int i = 0; i < 3 + (_status == Culled); i++)
 		{
-			half z = tri.v[i].vals[2], w = 1 / z;
-			tri.v[i].f16 *= w;
-			tri.v[i].loc.y = -tri.v[i].loc.y;
+			half z = v[i].vals[2], w = 1 / z;
+			v[i].f16 *= w;
+			v[i].loc.y = -v[i].loc.y;
 #ifdef _WIN32
-			tri.v[i].loc.x = (float)(tri.v[i].loc.x)*screenSize.x*0.5 + screenSize.x * 0.5f - 0.5f;
-			tri.v[i].loc.y = (float)(tri.v[i].loc.y)*screenSize.y*0.5 + screenSize.y * 0.5f - 0.5f;
-			tri.v[i].loc.z = (z - 0.5) / (200 - 1);
-			tri.v[i].loc.w = w;
+			v[i].loc.x = (float)(v[i].loc.x)*screenSize.x*0.5 + screenSize.x * 0.5f - 0.5f;
+			v[i].loc.y = (float)(v[i].loc.y)*screenSize.y*0.5 + screenSize.y * 0.5f - 0.5f;
+			v[i].loc.z = (z - 0) / (200 - 0);
+			v[i].loc.w = w;
 #else
-			tri.v[i].loc = (half4)(tri.v[i].loc.xy*screenSize*0.5 + screenSize * 0.5f - (half2)0.5f, (z - 1) / (200 - 1), w);
+			v[i].loc = (half4)(v[i].loc.xy*screenSize*0.5 + screenSize * 0.5f - (half2)0.5f, (z - 0) / (2000 - 0), w);
 #endif
 		}
+
+		if (_status == Culled)
+		{
+			//v[2] = unclip(v[0], v[2], zz);
+		}
+
+		bounds.x = min3(v[0].loc.x, v[1].loc.x, min2(v[2].loc.x, v[2 + (_status == Culled)].loc.x));
+		bounds.y = min3(v[0].loc.y, v[1].loc.y, min2(v[2].loc.y, v[2 + (_status == Culled)].loc.y));
+		bounds.z = max3(v[0].loc.x, v[1].loc.x, max2(v[2].loc.x, v[2 + (_status == Culled)].loc.x)) - bounds.x;
+		bounds.w = max3(v[0].loc.y, v[1].loc.y, max2(v[2].loc.y, v[2 + (_status == Culled)].loc.y)) - bounds.y;
+	
+		tri.v[0] = v[0];
+		tri.v[1] = v[1];
+		tri.v[2] = v[2];
+		tri.v[3] = v[3];
 	}
 	else
 	{
@@ -141,9 +175,12 @@ kernel void project(global Vertex* vertices, global uint* indices, global Triang
 		tri.v[1].f16 = (half16)0.f;
 		tri.v[2].f16 = (half16)0.f;
 		tri.v[3].f16 = (half16)0.f;
+		bounds.x = -1;
+		//tri.v[3].f16 = (half16)0.f;
 	}
 
 	triangles[get_global_id(0)] = tri;
+	triBounds[get_global_id(0)].bounds = bounds;
 
 #undef tri
 

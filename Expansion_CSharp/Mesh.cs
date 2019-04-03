@@ -46,6 +46,11 @@ namespace Expansion_CSharp
         {
             return "{" + string.Join(";", values.Select(v => string.Format("{0:0.00}", v))) + "}";
         }
+
+        internal bool IsZero()
+        {
+            return values.All(v => v == 0);
+        }
     }
     class Vertex
     {
@@ -94,6 +99,8 @@ namespace Expansion_CSharp
                 Vector vt1, vt2;
                 //float den;
 
+                if (v[ind[i + 0]].TexUV.IsZero() && v[ind[i + 1]].TexUV.IsZero() && v[ind[i + 2]].TexUV.IsZero())
+                    continue;
 
                 // Calculate the two vectors for this face.
                 v1 = v[ind[i + 1]].Position - v[ind[i + 0]].Position;
@@ -224,35 +231,88 @@ namespace Expansion_CSharp
             return square;
         }
 
+        static int getVertexIndex(string[] vals, int o, List<Vertex> vertices, Dictionary<long, int> vCache, List<Vector> v, List<Vector> vt, List<Vector> vn)
+        {
+            long key = 0;
+            int[] indices = { 0, 0, 0 };
+            for (int i = 0; i < 3; i++)
+            {
+                long.TryParse(vals[o + i], out var k);
+                key = (key << 16) | k;
+                indices[i] = (int)k;
+            }
+
+            if (!vCache.ContainsKey(key))
+            {
+                int ind = vertices.Count;
+                Vector p = v[indices[0] - 1];
+                vertices.Add(new Vertex(p, vn[indices[2] - 1], indices[1] == 0 ? new Vector(p.values[0] + p.values[1], p.values[0] + p.values[2]) * 0.01f : vt[indices[1] - 1]));
+                vCache.Add(key, ind);
+                return ind;
+            }
+
+            return vCache[key];
+        }
+
         public static Mesh CreateFromResource(string res)
         {
             CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
             var lines = res.Split('\r', '\n');
-            var v = new List<Vertex>(); int vt = 0, vn = 0;
+            var v = new List<Vector>();
+            var vt = new List<Vector>();
+            var vn = new List<Vector>();
+
+            var vertices = new List<Vertex>();
             var indices = new List<int>();
+
+            var vCache = new Dictionary<long, int>();
+            //var getIndex = (vals, i)=>()
+
             foreach (var line in lines)
             {
                 var vals = line.Split(' ');
-                
+
                 if (line.StartsWith("vt"))
-                    v[vt++].TexUV = new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray());
+                    vt.Add(new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray()));
                 else if (line.StartsWith("vn"))
-                    v[vn++].Normal = new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray());
+                    vn.Add(new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray()));
                 else if (line.StartsWith("v"))
-                    v.Add(new Vertex(new Vector(vals.Skip(1).Select(val => float.Parse(val)).ToArray()), null, null));
+                    v.Add(new Vector(vals.Skip(vals.Length - 3).Select(val => float.Parse(val)).ToArray()));
                 else if (line.StartsWith("f"))
                 {
+                    if (vertices == null)
+                    {
+                        var r = new Random();
+                        vertices = v.Select(vv => new Vertex(vv, new Vector(0, 1, 0), new Vector((float)r.NextDouble()*0, (float)r.NextDouble() * 0))).ToList();
+
+                        for (int i = 0; i < Math.Min(v.Count, vn.Count); i++)
+                            vertices[i].Normal = vn[i];
+
+                        for (int i = 0; i < Math.Min(v.Count, vt.Count); i++)
+                            vertices[i].TexUV = vt[i];
+                    }
                     vals = line.Split(' ', '/');
-                    indices.AddRange(new int[] { int.Parse(vals[1]) - 1, int.Parse(vals[4]) - 1, int.Parse(vals[7]) - 1 });
+                    indices.AddRange(new int[] {
+                        getVertexIndex(vals, 1, vertices, vCache, v, vt, vn),
+                        getVertexIndex(vals, 4, vertices, vCache, v, vt, vn),
+                        getVertexIndex(vals, 7, vertices, vCache, v, vt, vn)
+                    });
+                    if (vals.Length > 11)
+                        indices.AddRange(new int[] {
+                            getVertexIndex(vals, 1, vertices, vCache, v, vt, vn),
+                            getVertexIndex(vals, 7, vertices, vCache, v, vt, vn),
+                            getVertexIndex(vals, 10, vertices, vCache, v, vt, vn)
+                        });
                 }
 
             }
 
-            return new Mesh(v.ToArray(), indices.ToArray());
+            return new Mesh(vertices.ToArray(), indices.ToArray());
         }
 
         public static readonly Mesh Plane = CreatePlane();
         public static readonly Mesh Cube = CreateCube();
+        public static readonly Mesh Level = CreateFromResource(Resources.level);
         public static readonly Mesh SM_Rock_Chunk = CreateFromResource(Resources.SM_Rock_Chunk);
         public static readonly Mesh Minion = CreateFromResource(Resources.Minion);
         public static readonly Mesh Buff_White = CreateFromResource(Resources.Buff_White);

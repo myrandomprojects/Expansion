@@ -13,7 +13,7 @@ namespace Expansion_CSharp
 
         static CLCalc.Program.Kernel clear;
         static CLCalc.Program.Kernel project;
-        static CLCalc.Program.Kernel rasterize;
+        static CLCalc.Program.Kernel bin;
         static CLCalc.Program.Kernel finalize;
 
         static CLCalc.Program.Variable
@@ -21,7 +21,9 @@ namespace Expansion_CSharp
             clearColor,
             worldSettings,
             projVerticesBuff,
-            trianglesBuff;
+            trianglesBuff,
+            triBoundsBuff,
+            batchBuff;
         static CLCalc.Program.Image2D screen;
 
         static public CLCalc.Program.Image2D Texture0 { get; set; }
@@ -56,6 +58,7 @@ namespace Expansion_CSharp
                 + GPURenderer.matrix
                 + GPURenderer.clear
                 + GPURenderer.project
+                + GPURenderer.bin
                 + GPURenderer.rasterize
                 + GPURenderer.finalize
                 + string.Join("\r\n\r\n\r\n\r\n\r\n", mats.Select(mat => mat.Code));
@@ -63,7 +66,7 @@ namespace Expansion_CSharp
 
             clear = new CLCalc.Program.Kernel("clear");
             project = new CLCalc.Program.Kernel("project");
-            //rasterize = new CLCalc.Program.Kernel("rasterize");
+            bin = new CLCalc.Program.Kernel("bin");
             finalize = new CLCalc.Program.Kernel("finalize");
 
             renderTexture = new CLCalc.Program.Variable(typeof(float), 2 * ScreenSize[0] * ScreenSize[1]);
@@ -72,6 +75,8 @@ namespace Expansion_CSharp
             worldSettings = new CLCalc.Program.Variable(GetWorldSettings(new Vector(3, -12, 2)));
             projVerticesBuff = new CLCalc.Program.Variable(new float[16 * 100000]);
             trianglesBuff = new CLCalc.Program.Variable(new float[64 * 10000]);
+            triBoundsBuff = new CLCalc.Program.Variable(new float[4 * 10000]);
+            batchBuff = new CLCalc.Program.Variable(new byte[1000 * 1000]);
 
             foreach (var m in mats)
                 m.Kernel = new CLCalc.Program.Kernel("Material_" + m.Name);
@@ -101,16 +106,30 @@ namespace Expansion_CSharp
 
             mesh.LoadBuffers();
 
-            project.Execute(new CLCalc.Program.Variable[] { mesh.VBuffer, mesh.IBuffer, projVerticesBuff, transform, worldSettings }, new int[] { mesh.Indices.Length / 3 });
-            mat.Rasterize(renderTexture, worldSettings, mesh.VBuffer, projVerticesBuff, mesh.IBuffer, ScreenSize); 
+            project.Execute(new CLCalc.Program.Variable[] {
+                mesh.VBuffer,
+                mesh.IBuffer,
+                transform,
+                worldSettings,
+                projVerticesBuff,
+                triBoundsBuff
+            }, new int[] { mesh.Indices.Length / 3 });
+
+            bin.Execute(new CLCalc.Program.Variable[] {
+                triBoundsBuff,
+                worldSettings,
+                batchBuff
+            }, new int[] { (mesh.Indices.Length / 3 + 254) / 255, 256 }, new int[] { 1, 256 });
+
+            mat.Rasterize(renderTexture, worldSettings, projVerticesBuff, batchBuff, ScreenSize);
         }
 
         public static Bitmap Out()
         {
             finalize.Execute(new CLCalc.Program.MemoryObject[] { renderTexture, screen }, ScreenSize);
 
-            var f = new float[trianglesBuff.OriginalVarLength];
-            trianglesBuff.ReadFromDeviceTo(f);
+            //var f = new float[trianglesBuff.OriginalVarLength];
+            //trianglesBuff.ReadFromDeviceTo(f);
 
             return screen.ReadBitmap();
         }

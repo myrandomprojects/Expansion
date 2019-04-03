@@ -19,7 +19,7 @@ namespace Expansion_CSharp {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -61,6 +61,40 @@ namespace Expansion_CSharp {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to #ifdef _WIN32
+        ///
+        ///#include &quot;matrix.h&quot;
+        ///
+        ///#endif
+        ///
+        ///typedef struct {
+        ///	int2 binSize;
+        ///	int2 binsCount;
+        ///} BinSettings;
+        ///
+        ///bool rectanglesIntersect(const float4 a, const float4 b)
+        ///{
+        ///	float2 pt = (b.xy + b.zw);
+        ///
+        ///	return (pt.x &gt;= a.x &amp;&amp; pt.x &lt;= a.x + a.z + b.z
+        ///		&amp;&amp; pt.y &gt;= a.y &amp;&amp; pt.y &lt;= a.y + a.w + b.w);
+        ///}
+        ///
+        ///kernel void bin(
+        ///	//global const Triangle* triangles,
+        ///	global const TriangleBounds* triBounds,
+        ///	global WorldSettings* worldSettings,
+        ///	global Batch* batches
+        ///) {
+        ///	const unsigned int batchCount =  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string bin {
+            get {
+                return ResourceManager.GetString("bin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to # UnrealEd OBJ exporter (_Internal)
         ///
         ///
@@ -96,6 +130,35 @@ namespace Expansion_CSharp {
         internal static string Buff_White {
             get {
                 return ResourceManager.GetString("Buff_White", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to # 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+        ///# File Created: 01.04.2019 15:30:03
+        ///
+        ///#
+        ///# object Untitled
+        ///#
+        ///
+        ///v  59.3982 46.2500 76.8351
+        ///v  -154.4143 0.0000 76.8351
+        ///v  59.3982 0.0000 76.8351
+        ///v  -154.4143 46.2500 76.8351
+        ///v  -154.4143 46.2500 -131.4041
+        ///v  -154.4143 17.0625 -78.3524
+        ///v  -154.4143 17.0625 -131.4041
+        ///v  -154.4143 0.0000 -78.3524
+        ///v  -14.7098 0.0000 -23.0497
+        ///v  -68.7098 0.0000 5.7628
+        ///v  -68.7098 0.0000 -23.0497
+        ///v  -14.7098 0.0000 5.7628
+        ///v  -14.7098 26.1591 -1.5615
+        ///v  -14.7098 68.5625 5.7628 [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string level {
+            get {
+                return ResourceManager.GetString("level", resourceCulture);
             }
         }
         
@@ -200,7 +263,10 @@ namespace Expansion_CSharp {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to #MATERIAL
+        ///{
+        ///	BaseColor = sample(T_Brick_Clay_Old_D);
+        ///}.
         /// </summary>
         internal static string SimpleMaterial {
             get {

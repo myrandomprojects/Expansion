@@ -28,7 +28,7 @@ typedef struct {
 
 float3 sampleTexture(read_only image2d_t tex, const float2 uv)
 {
-	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
+	const sampler_t texsampler = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_REPEAT | CLK_FILTER_NEAREST;
 
 	float3 color = convert_float3(read_imageui(tex, texsampler, uv).zyx) * (1.f / 255);
 
@@ -118,12 +118,13 @@ int TryFind(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, Triangle tri)
 
 		if (w[0] < 0 || w[1] < 0 || w[2] < 0)
 		{
-			if (v[3].loc.z == -1)
+			if (v[3].loc.z == 99999)
 				return 0;
 
 			v++;
 			vSwap(v + 1, v + 2);
 
+			// Setup.bat -exclude=Linux -exclude=IOS -exclude=Mac -exclude=HTML5 -exclude=Android -exclude=TVOS -exclude=Win32
 			w[0] = -edgeFunction(v[1].loc, v[2].loc, pos.xyxy);
 			w[1] = -edgeFunction(v[2].loc, v[0].loc, pos.xyxy);
 			w[2] = -edgeFunction(v[0].loc, v[1].loc, pos.xyxy);
@@ -178,14 +179,44 @@ int TryFind(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, Triangle tri)
 	}
 }
 
-int FindNearestVertex(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, global Triangle* triangles, int count)
+int FindNearestVertex(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, global const Triangle* triangles, int count, global const Batch* batches)
 {
 	int vFound = 0;
 
+	const int2 pt = (int2)(get_global_id(0) / 16, get_global_id(1) / 16);
+	const int2 screenSize = (int2)((get_global_size(0)+15) / 16, (get_global_size(1) + 15) / 16);
+	const int binId = pt.y * screenSize.x + pt.x;
+	
+	local Batch batch;
 
 	for (uint pI = 0; pI < count; pI++)
 	{
-		vFound += TryFind(vOut, uvSamples, pix, triangles[pI]);
+		int primId = pI % 255;
+
+		if (primId == 0)
+		{
+			barrier(CLK_LOCAL_MEM_FENCE);
+			event_t event = async_work_group_copy(
+				(local char*)&batch,
+				(global const char*)(batches + (count + 254) / 255 * binId + pI / 255),
+				sizeof(Batch),
+				0
+			);
+			wait_group_events(1, &event);
+		}
+
+		if (pI % 255 == 0)
+		{
+			if ((batch.bytes[31] & 128) == 0)
+			{
+				pI += 254;
+				continue;
+			}
+		}
+
+		if (batch.bytes[primId / 8] & (1 << primId % 8))
+			vFound += TryFind(vOut, uvSamples, pix, triangles[pI]);
+
 		//TriPack pack = tri[pI];
 		//Triangle tri = triangles[pI];
 
@@ -211,20 +242,20 @@ int FindNearestVertex(VertexOut* vOut, UVSamples* uvSamples, Pixel* pix, global 
 	Vertex v;   \
 	UVSamples s; s.count = 0; \
 				\
-	if (FindNearestVertex(&v,  &s, &pix, tri, worldSettings->triangleCount)) \
+	if (FindNearestVertex(&v,  &s, &pix, tri, worldSettings->triangleCount, batches)) \
 	{ \
 		MAT_VARIABLES()
 
 #define MAT_FOOTER() \
 		Normal = normal(v)*Normal.z + tangent(v)*Normal.x + binormal(v)*Normal.y; \
-		float ambient = clamp(-dot(worldSettings->lightDir, Normal)*0.4f+0.6f, 0.1f, 1.f); \
+		float ambient = clamp(-dot(worldSettings->lightDir, Normal)*0.6f+0.4f, 0.1f, 1.f); \
 																				 \
-		float3 finalColor = BaseColor * (ambient + 0.2); \
+		float3 finalColor = BaseColor * (ambient); \
 		pix.color = convert_uchar4((float4)(clamp(finalColor.x * 255, 0.f, 255.f), clamp(finalColor.y * 255, 0.f, 255.f), clamp(finalColor.z * 255, 0.f, 255.f), 255.f));\
 		getPixel(canvas, pos)[0] = pix; \
 	}
 	
-#define MAT_ARGS() global RenderTexture* canvas, global WorldSettings* worldSettings, global Triangle* tri //, global Triangle* tri 
+#define MAT_ARGS() global RenderTexture* canvas, global WorldSettings* worldSettings, global const Triangle* tri, global const Batch* batches //, global Triangle* tri 
 #define MAT_FUNC kernel void 
 
 /*
