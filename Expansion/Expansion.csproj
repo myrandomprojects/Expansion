@@ -1,12 +1,123 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{FC7E315D-F694-4887-8CCB-464B61DEB92E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Expansion</RootNamespace>
+    <AssemblyName>Expansion</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
-
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
-    <Folder Include="Graphics\Providers\OpenCL\" />
-    <Folder Include="Core\" />
+    <Reference Include="Cloo, Version=0.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\Cloo.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenCLTemplate">
+      <HintPath>..\Game\bin\Debug\OpenCLTemplate.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Compile Include="Engine\*.cs" />
+    <Compile Include="Engine\*\*.cs" />
+    <Compile Include="Engine\Classes\Camera\Camera.cs" />
+    <Compile Include="Engine\Classes\GameFramework\Component.cs" />
+    <Compile Include="Engine\Classes\GameFramework\GameModeBase.cs" />
+    <Compile Include="Engine\Classes\GameFramework\GameObject.cs" />
+    <Compile Include="Engine\Classes\GameFramework\MeshActor.cs" />
+    <Compile Include="Engine\Classes\GameFramework\MeshComponent.cs" />
+    <Compile Include="Engine\Classes\GameFramework\PlayerController.cs" />
+    <Compile Include="Engine\Classes\GameFramework\PlayerStart.cs" />
+    <Compile Include="Engine\Classes\GameFramework\RNG.cs" />
+    <Compile Include="Engine\Classes\Materials\MaterialBaseNew.cs" />
+    <Compile Include="Graphics\*.cs" />
+    <Compile Include="Graphics\Classes\IRenderable.cs" />
+    <Compile Include="Graphics\Classes\IScene.cs" />
+    <Compile Include="Graphics\Classes\SceneView.cs" />
+    <Compile Include="Graphics\Classes\Widget.cs" />
+    <Compile Include="Graphics\Providers\ProviderManager.cs" />
+    <Compile Include="Graphics\Rendering\DefaultRenderer.cs" />
+    <Compile Include="Graphics\Rendering\RenderingPipeline.cs" />
+    <Compile Include="Graphics\Rendering\ResourceManager.cs" />
+    <Compile Include="Graphics\Providers\IProvider\IRenderer.cs" />
+    <Compile Include="Graphics\Providers\IProvider\Material.cs" />
+    <Compile Include="Engine\Classes\Materials\MaterialBase.cs" />
+    <Compile Include="Graphics\Providers\IProvider\MaterialParams.cs" />
+    <Compile Include="Engine\Classes\Materials\MaterialTypes.cs" />
+    <Compile Include="Graphics\Providers\IProvider\Window.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\Buffers.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\ImplDef.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\MaterialCL.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\RendererCL.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\RenderTargetCL.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\ShaderCL.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\WindowCL.cs" />
+    <Compile Include="Graphics\Providers\OpenCL\GPU.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>GPU.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Graphics\*\*\*\*.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Graphics\Providers\OpenCL\GPU.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>GPU.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\bin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\clear.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\finalize.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\matrix.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\project.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\rasterize.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\types.h" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

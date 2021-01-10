@@ -1,0 +1,185 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{394F6A9E-8CE5-43A4-9C41-7ADA6C1A7674}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Expansion_CSharp</RootNamespace>
+    <AssemblyName>Expansion_CSharp</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Cloo, Version=0.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\Cloo.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenCLTemplate, Version=1.1.7.7, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\OpenCLTemplate.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Actor.cs" />
+    <None Include="Content.cs" />
+    <Compile Include="GameClasses\GameGame.cs" />
+    <Compile Include="GameClasses\GameMode.cs" />
+    <Compile Include="GameClasses\Materials\RockMaterial.cs" />
+    <Compile Include="GameClasses\PlayerCharacter.cs" />
+    <Compile Include="GPURenderer.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>GPURenderer.resx</DependentUpon>
+    </Compile>
+    <None Include="Landscape.cs" />
+    <None Include="Material.cs" />
+    <None Include="Mesh.cs" />
+    <None Include="MeshActor.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Renderer.cs" />
+    <Compile Include="Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Texture.cs" />
+    <None Include="Transform.cs" />
+    <None Include="World.cs" />
+    <EmbeddedResource Include="GPURenderer.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>GPURenderer.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\T_Brick_Clay_Old_D.BMP" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\T_Brick_Clay_Old_N.BMP" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SM_Rock_Chunk_LowPoly_Internal.OBJ.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\RockMaterial.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Minion.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MinionMaterial.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\T_Minion_Dawn_Melee_D.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\T_Minion_Dawn_Melee_MASK01.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\T_Minion_Dawn_Melee_N.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MaterialBase.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Buff_White.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\T_Buff_White_D.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\T_Buff_White_N.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\clear.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\finalize.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\matrix.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\project.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\rasterize.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SimpleMaterial.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\bin.cpp" />
+    <None Include="Resources\level.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Expansion\Expansion.csproj">
+      <Project>{fc7e315d-f694-4887-8ccb-464b61deb92e}</Project>
+      <Name>Expansion</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
