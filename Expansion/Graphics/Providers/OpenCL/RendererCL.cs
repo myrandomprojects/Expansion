@@ -1,4 +1,5 @@
-﻿using Expansion.Engine.Math3D;
+﻿using Expansion.Engine.Classes.Camera;
+using Expansion.Engine.Math3D;
 using Expansion.Graphics.Classes;
 using Expansion.Graphics.Providers.IProvider;
 using Expansion.Graphics.Providers.IProvider.Resources;
@@ -54,7 +55,7 @@ namespace Expansion.Graphics.Providers.OpenCL
 
         public Material CreateMaterial(string code)
         {
-
+            throw new NotImplementedException();
         }
 
         public MeshImpl GetMeshImpl(MeshResource mesh)
@@ -84,6 +85,11 @@ namespace Expansion.Graphics.Providers.OpenCL
         }
 
         public void RenderMesh(MeshResource mesh, Transform transform, Camera camera)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RenderMesh(MeshImpl mesh, Transform transform, Camera camera)
         {
             throw new NotImplementedException();
         }

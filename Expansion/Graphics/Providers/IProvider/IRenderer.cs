@@ -1,4 +1,5 @@
-﻿using Expansion.Engine.Math3D;
+﻿using Expansion.Engine.Classes.Camera;
+using Expansion.Engine.Math3D;
 using Expansion.Graphics.Classes;
 using Expansion.Graphics.Providers.IProvider.Resources;
 using System;

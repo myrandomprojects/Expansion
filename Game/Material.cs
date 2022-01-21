@@ -52,21 +52,14 @@ namespace Expansion_CSharp
             return objs;
         }
 
-        internal void Rasterize(Variable renderTexture, Variable worldSettings, Variable projVerticesBuff, Variable batches, int[] screenSize)
+        internal void Rasterize(Variable renderTexture, Variable worldSettings, Variable vertices, Variable projVerticesBuff, Variable indices, int[] screenSize)
         {
-            /*
             var f = new float[projVerticesBuff.OriginalVarLength];
             projVerticesBuff.ReadFromDeviceTo(f);
             string a = "";
             for (int i = 0; i < 64; i++)
                 a += f[128 + i] + ", ";
-            */
-
-            Kernel.Execute(
-                new MemoryObject[] { renderTexture, worldSettings, projVerticesBuff, batches }.Concat(textures.Select(t => t.GPUResource)).ToArray(),
-                screenSize,
-                new int[] { 16, 16 }
-            );
+            Kernel.Execute(new MemoryObject[] { renderTexture, worldSettings, projVerticesBuff }.Concat(textures.Select(t => t.GPUResource)).ToArray(), screenSize);
         }
     }
 }

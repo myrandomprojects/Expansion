@@ -10,19 +10,9 @@
 #define get_global_id(i) 0
 #define get_global_size(i) 1
 #define get_local_id(i) 0
-#define get_local_size(i) 0
-
-#define CLK_LOCAL_MEM_FENCE
-#define CLK_GLOBAL_MEM_FENCE
-#define barrier(x)
-#define async_work_group_copy(target, src, num_elements, out) 0
-#define wait_group_events(n, event)
-
-#define vstore4(v, offset, dest)
 
 #define CLK_NORMALIZED_COORDS_TRUE 1
 #define CLK_ADDRESS_NONE 2
-#define CLK_ADDRESS_REPEAT 3
 #define CLK_FILTER_NEAREST 4
 
 #define xy _xy()
@@ -31,7 +21,6 @@
 #define xyzz _xyzz()
 #define xyzw _xyzz()
 #define xyxy _xyxy()
-#define zw _zw()
 
 #define convert_float3(f) (*(float3*)&f)
 #define convert_half16(f) (*(half16*)&f)
@@ -45,8 +34,6 @@ typedef unsigned short ushort;
 typedef unsigned int uint;
 typedef unsigned long long ulong;
 typedef float half;
-
-typedef int event_t;
 
 template<class T, int d, int D>
 struct vValue
@@ -90,7 +77,6 @@ struct vec
 	vec<T, 4> _xyzz()const { return { x, y, z, z }; }
 	vec<T, 4> _xyzw()const { return { x, y, z, w }; }
 	vec<T, 4> _xyxy()const { return { x, y, x, y }; }
-	vec<T, 2> _zw()const { return { z, w }; }
 
 	V operator+(V v)const { return { x + v.x,y + v.y,z + v.z,w + v.w }; }
 	V operator-(V v)const { return { x - v.x,y - v.y,z - v.z,w - v.w }; }
@@ -116,9 +102,7 @@ using ushort2 = vec<ushort, 2>;
 using ushort3 = vec<ushort, 3>;
 using ushort4 = vec<ushort, 4>;
 using int2 = vec<int, 2>;
-using int4 = vec<int, 4>;
 using uint4 = vec<uint, 4>;
-using ulong4 = vec<ulong, 4>;
 
 /*
 struct int2 { int x, y; };
@@ -214,10 +198,8 @@ typedef uchar4 image2d_t[100];
 
 void write_imageui(image2d_t, int2, uint4);
 
-#define CNTR(n) n() {}
 #else
 #define COORD(x,y) (int2)(x,y)
-#define CNTR(n) 
 #endif
 
 #define ARRAYSIZE(a) (sizeof(a)/sizeof(a[0]))
@@ -282,23 +264,22 @@ typedef union VOUT{
 		half2 uv;
 		half3 tangent;
 	};
-	CNTR(VOUT)
+#ifdef _WIN32
+	VOUT() {}
+#endif
 
 	//float4 loc;
 	//float3 normal, tangent, binormal;
 	//float2 uv, screenPos;
 } VertexOut;
-
 typedef struct TTT{
 	//ushort2 pmin, pmax;
 	VertexOut v[4];
-	CNTR(TTT)
+#ifdef _WIN32
+	TTT() {}
+#endif
 } Triangle;
 
-
-typedef struct TTB {
-	float4 bounds;
-} TriangleBounds;
 
 #define triPerPack 4
 
@@ -306,14 +287,10 @@ typedef struct TTR{
 	byte tCount;
 	ushort2 pmin, pmax;
 	Triangle tri[triPerPack];
-	CNTR(TTR)
+#ifdef _WIN32
+	TTR() {}
+#endif
 } TriPack;
-
-typedef union BBB{
-	ulong4 vec;
-	uchar bytes[32];
-	CNTR(BBB)
-} Batch;
 
 
 typedef struct WS{
@@ -328,7 +305,9 @@ typedef struct WS{
 		float2 screenSize;
 	} camera;
 
-	CNTR(WS)
+#ifdef _WIN32
+	WS() {}
+#endif
 } WorldSettings;
 
 

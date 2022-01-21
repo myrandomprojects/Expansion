@@ -1,4 +1,5 @@
-﻿using Expansion.Graphics.Providers.IProvider.Resources;
+﻿using Expansion.Engine.Classes.Camera;
+using Expansion.Graphics.Providers.IProvider.Resources;
 
 namespace Expansion.Graphics.Classes
 {

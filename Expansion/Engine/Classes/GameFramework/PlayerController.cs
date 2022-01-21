@@ -14,7 +14,7 @@ namespace Expansion.Engine.Classes.GameFramework
         public Window Window { get { return View.Window; } }
         public Widget View { get; }
         public GameObject PlayerCharacter { get { return PlayerCamera?.Owner; } }
-        public Camera PlayerCamera { get; set; }
+        public Camera.Camera PlayerCamera { get; set; }
 
         public PlayerController(Widget view = null)
         {
@@ -39,7 +39,7 @@ namespace Expansion.Engine.Classes.GameFramework
 
         public void Possess(GameObject character)
         {
-            PlayerCamera = character.Components.OfType<Camera>().First();
+            PlayerCamera = character.Components.OfType<Camera.Camera>().First();
         }
 
         internal void Tick()

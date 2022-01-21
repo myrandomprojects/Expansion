@@ -23,9 +23,9 @@ namespace Expansion_CSharp
 
         public void Tick()
         {
-            var r = objects[0].Transform.Rotation;
-            r.values[1] += 0.01f;
-            objects[0].Transform.Rotation = r;
+            var r = objects.Last().Transform.Rotation;
+            r.values[0] += 0.01f;
+            objects.Last().Transform.Rotation = r;
 
             Renderer.Clear();
             foreach(var obj in objects)

@@ -79,7 +79,7 @@ namespace Expansion.Engine.Classes.Materials
     {
     }
 
-    public abstract class PixelShaderBase
+    public abstract partial class PixelShaderBase
     {
         public Float4 out_color;
     }
